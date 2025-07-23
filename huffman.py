@@ -19,8 +19,9 @@ class Node:
     char: str | None
     weight: int
     children: List[Node]
-    encoding_bits: int = 0
+    encoding_bits: tuple[int, int] = (0, 0)
     encoding_length: int = 0
+    encoding_path_int: tuple[int, int] | None = None
     _id_counter: ClassVar[int] = 0
     @staticmethod
     def new_leaf(character: str | None, weight: int):
@@ -47,15 +48,6 @@ def read_int8(stream: io.BufferedReader) -> int:
 def read_int32(stream: io.BufferedReader) -> int:
     return int.from_bytes(stream.read(4), "big")
 
-def pop_min_node(nodes: List[Node]) -> Node:
-    min_index = 0
-    min_weight = 1e99
-    for i, node in enumerate(nodes):
-        if node.weight < min_weight:
-            min_index = i
-            min_weight = node.weight
-    return nodes.pop(min_index)
-
 class HuffmanTree:
     def __init__(self, root: Node, encoding_table: dict[str, Node]):
         self.root = root
@@ -63,18 +55,19 @@ class HuffmanTree:
         self.compute_bit_sequences()
     def compute_bit_sequences(self):
         for _, node in self.encoding_table.items():
-            current: Node = node
-            path = []
+            current = node
+            bits = []
             while current.parent:
-                bit = current.parent.children.index(current)
-                path.append(bit)
-                current = current.parent
-            path.reverse()
-            bits = 0
-            for bit in path:
-                bits = (bits << 1) | bit
-            node.encoding_bits = bits
-            node.encoding_length = len(path)
+                parent = current.parent
+                bit = parent.children.index(current)
+                bits.append(bit)
+                current = parent
+            bits.reverse()
+            path_int = 0
+            for b in bits:
+                path_int = (path_int << 1) | b
+            node.encoding_bits = (path_int, len(bits))
+            node.encoding_path_int = (path_int, len(bits))
     @staticmethod
     def new(frequency_list: List[tuple[str, int]]):
         encoding_table: dict[str, Node] = {}
@@ -112,11 +105,12 @@ class HuffmanEncoderUnicode:
         write_int32(self.stream, 0)
         self.encoded_message_used_bits_position = self.stream.tell()
         write_int8(self.stream, 0)
-    def write(self, character) -> None:
-        node = self.tree.encoding_table[character]
-        for i in reversed(range(node.encoding_length)):
-            bit = (node.encoding_bits >> i) & 1
-            self.buffer.write_bit(bit)
+    # def write(self, character) -> None:
+    #     node = self.tree.encoding_table[character]
+    #     for bit in node.encoding_bits:
+    #         self.buffer.write_bit(bit)
+    def write_chunk(self, text_chunk):
+        self.buffer.write_chunk(text_chunk, self.tree.encoding_table)
     def close(self):
         used_bits = self.buffer.bit_pos
         self.buffer.flush()
@@ -180,8 +174,7 @@ def encode_streaming(input_path, output_path, chunk_size=8192):
         with open(input_path, "r", encoding="utf-8") as fin:
             with tqdm(total=file_size, desc="Encoding", unit="B", unit_scale=True) as pbar:
                 for chunk in iter(lambda: fin.read(chunk_size), ""):
-                    for char in chunk:
-                        encoder.write(char)
+                    encoder.write_chunk(chunk)
                     pbar.update(len(chunk))
         encoder.close()
 

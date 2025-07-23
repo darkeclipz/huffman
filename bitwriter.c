@@ -3,6 +3,7 @@
 /* BEGIN: Cython Metadata
 {
     "distutils": {
+        "depends": [],
         "name": "bitwriter",
         "sources": [
             "bitwriter.pyx"
@@ -1127,6 +1128,9 @@ static CYTHON_INLINE float __PYX_NAN() {
 #define __PYX_HAVE__bitwriter
 #define __PYX_HAVE_API__bitwriter
 /* Early includes */
+#include <string.h>
+#include <stdio.h>
+#include <stdint.h>
 #ifdef _OPENMP
 #include <omp.h>
 #endif /* _OPENMP */
@@ -1336,6 +1340,7 @@ static const char *__pyx_filename;
 static const char* const __pyx_f[] = {
   "bitwriter.pyx",
   "<stringsource>",
+  "cpython/type.pxd",
 };
 /* #### Code section: utility_code_proto_before_types ### */
 /* Atomics.proto */
@@ -1504,17 +1509,19 @@ static const char* const __pyx_f[] = {
 /*--- Type declarations ---*/
 struct __pyx_obj_9bitwriter_BufferedBitWriterNative;
 
-/* "bitwriter.pyx":1
+/* "bitwriter.pyx":7
+ * cimport cython
+ * 
  * cdef class BufferedBitWriterNative:             # <<<<<<<<<<<<<<
- *     cdef object stream  # Remove type annotation here
- *     cdef bytearray byte_buffer
+ *     cdef:
+ *         object stream               # Python buffered writer
 */
 struct __pyx_obj_9bitwriter_BufferedBitWriterNative {
   PyObject_HEAD
   struct __pyx_vtabstruct_9bitwriter_BufferedBitWriterNative *__pyx_vtab;
   PyObject *stream;
   PyObject *byte_buffer;
-  int bit_buffer;
+  uint8_t bit_buffer;
   int bit_pos;
   int buffer_size;
 };
@@ -1522,11 +1529,11 @@ struct __pyx_obj_9bitwriter_BufferedBitWriterNative {
 
 
 struct __pyx_vtabstruct_9bitwriter_BufferedBitWriterNative {
-  void (*write_bit)(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *, int, int __pyx_skip_dispatch);
-  void (*write_bits)(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *, unsigned int, int, int __pyx_skip_dispatch);
-  void (*flush_bytes)(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *, int __pyx_skip_dispatch);
-  void (*flush)(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *, int __pyx_skip_dispatch);
-  int (*bytes_written)(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *, int __pyx_skip_dispatch);
+  PyObject *(*write_bit)(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *, int, int __pyx_skip_dispatch);
+  PyObject *(*write_chunk)(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *, PyObject *, PyObject *, int __pyx_skip_dispatch);
+  PyObject *(*flush_bytes)(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *, int __pyx_skip_dispatch);
+  PyObject *(*flush)(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *, int __pyx_skip_dispatch);
+  int (*bits_written)(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *, int __pyx_skip_dispatch);
 };
 static struct __pyx_vtabstruct_9bitwriter_BufferedBitWriterNative *__pyx_vtabptr_9bitwriter_BufferedBitWriterNative;
 /* #### Code section: utility_code_proto ### */
@@ -1876,6 +1883,48 @@ static PyObject* __Pyx_PyObject_CallMethod1(PyObject* obj, PyObject* method_name
 /* ByteArrayAppend.proto */
 static CYTHON_INLINE int __Pyx_PyByteArray_Append(PyObject* bytearray, int value);
 
+/* GetItemInt.proto */
+#define __Pyx_GetItemInt(o, i, type, is_signed, to_py_func, is_list, wraparound, boundscheck, has_gil)\
+    (__Pyx_fits_Py_ssize_t(i, type, is_signed) ?\
+    __Pyx_GetItemInt_Fast(o, (Py_ssize_t)i, is_list, wraparound, boundscheck) :\
+    (is_list ? (PyErr_SetString(PyExc_IndexError, "list index out of range"), (PyObject*)NULL) :\
+               __Pyx_GetItemInt_Generic(o, to_py_func(i))))
+#define __Pyx_GetItemInt_List(o, i, type, is_signed, to_py_func, is_list, wraparound, boundscheck, has_gil)\
+    (__Pyx_fits_Py_ssize_t(i, type, is_signed) ?\
+    __Pyx_GetItemInt_List_Fast(o, (Py_ssize_t)i, wraparound, boundscheck) :\
+    (PyErr_SetString(PyExc_IndexError, "list index out of range"), (PyObject*)NULL))
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_List_Fast(PyObject *o, Py_ssize_t i,
+                                                              int wraparound, int boundscheck);
+#define __Pyx_GetItemInt_Tuple(o, i, type, is_signed, to_py_func, is_list, wraparound, boundscheck, has_gil)\
+    (__Pyx_fits_Py_ssize_t(i, type, is_signed) ?\
+    __Pyx_GetItemInt_Tuple_Fast(o, (Py_ssize_t)i, wraparound, boundscheck) :\
+    (PyErr_SetString(PyExc_IndexError, "tuple index out of range"), (PyObject*)NULL))
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Tuple_Fast(PyObject *o, Py_ssize_t i,
+                                                              int wraparound, int boundscheck);
+static PyObject *__Pyx_GetItemInt_Generic(PyObject *o, PyObject* j);
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Fast(PyObject *o, Py_ssize_t i,
+                                                     int is_list, int wraparound, int boundscheck);
+
+/* DictGetItem.proto */
+#if !CYTHON_COMPILING_IN_PYPY
+static PyObject *__Pyx_PyDict_GetItem(PyObject *d, PyObject* key);
+#define __Pyx_PyObject_Dict_GetItem(obj, name)\
+    (likely(PyDict_CheckExact(obj)) ?\
+     __Pyx_PyDict_GetItem(obj, name) : PyObject_GetItem(obj, name))
+#else
+#define __Pyx_PyDict_GetItem(d, key) PyObject_GetItem(d, key)
+#define __Pyx_PyObject_Dict_GetItem(obj, name)  PyObject_GetItem(obj, name)
+#endif
+
+/* RaiseUnexpectedTypeError.proto */
+static int __Pyx_RaiseUnexpectedTypeError(const char *expected, PyObject *obj);
+
+/* ArgTypeTest.proto */
+#define __Pyx_ArgTypeTest(obj, type, none_allowed, name, exact)\
+    ((likely(__Pyx_IS_TYPE(obj, type) | (none_allowed && (obj == Py_None)))) ? 1 :\
+        __Pyx__ArgTypeTest(obj, type, name, exact))
+static int __Pyx__ArgTypeTest(PyObject *obj, PyTypeObject *type, const char *name, int exact);
+
 /* PyObjectFastCallMethod.proto */
 #if CYTHON_VECTORCALL && PY_VERSION_HEX >= 0x03090000
 #define __Pyx_PyObject_FastCallMethod(name, args, nargsf) PyObject_VectorcallMethod(name, args, nargsf, NULL)
@@ -1937,6 +1986,25 @@ static int __Pyx__DelItemOnTypeDict(PyTypeObject *tp, PyObject *k);
 
 /* SetupReduce.proto */
 static int __Pyx_setup_reduce(PyObject* type_obj);
+
+/* TypeImport.proto */
+#ifndef __PYX_HAVE_RT_ImportType_proto_3_1_2
+#define __PYX_HAVE_RT_ImportType_proto_3_1_2
+#if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#include <stdalign.h>
+#endif
+#if (defined (__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) || __cplusplus >= 201103L
+#define __PYX_GET_STRUCT_ALIGNMENT_3_1_2(s) alignof(s)
+#else
+#define __PYX_GET_STRUCT_ALIGNMENT_3_1_2(s) sizeof(void*)
+#endif
+enum __Pyx_ImportType_CheckSize_3_1_2 {
+   __Pyx_ImportType_CheckSize_Error_3_1_2 = 0,
+   __Pyx_ImportType_CheckSize_Warn_3_1_2 = 1,
+   __Pyx_ImportType_CheckSize_Ignore_3_1_2 = 2
+};
+static PyTypeObject *__Pyx_ImportType_3_1_2(PyObject* module, const char *module_name, const char *class_name, size_t size, size_t alignment, enum __Pyx_ImportType_CheckSize_3_1_2 check_size);
+#endif
 
 /* FetchSharedCythonModule.proto */
 static PyObject *__Pyx_FetchSharedCythonABIModule(void);
@@ -2096,9 +2164,6 @@ static void __Pyx_AddTraceback(const char *funcname, int c_line,
 /* CIntFromPy.proto */
 static CYTHON_INLINE int __Pyx_PyLong_As_int(PyObject *);
 
-/* CIntFromPy.proto */
-static CYTHON_INLINE unsigned int __Pyx_PyLong_As_unsigned_int(PyObject *);
-
 /* PyObjectVectorCallKwBuilder.proto */
 CYTHON_UNUSED static int __Pyx_VectorcallBuilder_AddArg_Check(PyObject *key, PyObject *value, PyObject *builder, PyObject **args, int n);
 #if CYTHON_VECTORCALL
@@ -2121,10 +2186,10 @@ static int __Pyx_VectorcallBuilder_AddArgStr(const char *key, PyObject *value, P
 static CYTHON_INLINE PyObject* __Pyx_PyLong_From_int(int value);
 
 /* CIntToPy.proto */
-static CYTHON_INLINE PyObject* __Pyx_PyLong_From_long(long value);
+static CYTHON_INLINE PyObject* __Pyx_PyLong_From_uint8_t(uint8_t value);
 
 /* CIntToPy.proto */
-static CYTHON_INLINE PyObject* __Pyx_PyLong_From_unsigned_int(unsigned int value);
+static CYTHON_INLINE PyObject* __Pyx_PyLong_From_long(long value);
 
 /* FormatTypeName.proto */
 #if CYTHON_COMPILING_IN_LIMITED_API
@@ -2223,11 +2288,29 @@ static int __Pyx_State_RemoveModule(void*);
 #define __PYX_ABI_MODULE_NAME "_cython_" CYTHON_ABI
 #define __PYX_TYPE_MODULE_PREFIX __PYX_ABI_MODULE_NAME "."
 
-static void __pyx_f_9bitwriter_23BufferedBitWriterNative_write_bit(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self, int __pyx_v_bit, int __pyx_skip_dispatch); /* proto*/
-static void __pyx_f_9bitwriter_23BufferedBitWriterNative_write_bits(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self, unsigned int __pyx_v_bits, int __pyx_v_length, int __pyx_skip_dispatch); /* proto*/
-static void __pyx_f_9bitwriter_23BufferedBitWriterNative_flush_bytes(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self, int __pyx_skip_dispatch); /* proto*/
-static void __pyx_f_9bitwriter_23BufferedBitWriterNative_flush(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self, int __pyx_skip_dispatch); /* proto*/
-static int __pyx_f_9bitwriter_23BufferedBitWriterNative_bytes_written(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self, int __pyx_skip_dispatch); /* proto*/
+static PyObject *__pyx_f_9bitwriter_23BufferedBitWriterNative_write_bit(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self, int __pyx_v_bit, int __pyx_skip_dispatch); /* proto*/
+static PyObject *__pyx_f_9bitwriter_23BufferedBitWriterNative_write_chunk(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self, PyObject *__pyx_v_text, PyObject *__pyx_v_encoding_table, int __pyx_skip_dispatch); /* proto*/
+static PyObject *__pyx_f_9bitwriter_23BufferedBitWriterNative_flush_bytes(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self, int __pyx_skip_dispatch); /* proto*/
+static PyObject *__pyx_f_9bitwriter_23BufferedBitWriterNative_flush(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self, int __pyx_skip_dispatch); /* proto*/
+static int __pyx_f_9bitwriter_23BufferedBitWriterNative_bits_written(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self, int __pyx_skip_dispatch); /* proto*/
+
+/* Module declarations from "libc.string" */
+
+/* Module declarations from "libc.stdio" */
+
+/* Module declarations from "__builtin__" */
+
+/* Module declarations from "cpython.type" */
+
+/* Module declarations from "cpython" */
+
+/* Module declarations from "cpython.object" */
+
+/* Module declarations from "cpython.bytes" */
+
+/* Module declarations from "libc.stdint" */
+
+/* Module declarations from "cython" */
 
 /* Module declarations from "bitwriter" */
 /* #### Code section: typeinfo ### */
@@ -2246,23 +2329,23 @@ static const char __pyx_k_Q[] = "\200\001\330\004\n\210+\220Q";
 static const char __pyx_k_gc[] = "gc";
 static const char __pyx_k_bit[] = "bit";
 static const char __pyx_k_pop[] = "pop";
-static const char __pyx_k_bits[] = "bits";
 static const char __pyx_k_func[] = "__func__";
 static const char __pyx_k_main[] = "__main__";
 static const char __pyx_k_name[] = "__name__";
 static const char __pyx_k_self[] = "self";
 static const char __pyx_k_test[] = "__test__";
+static const char __pyx_k_text[] = "text";
 static const char __pyx_k_clear[] = "clear";
 static const char __pyx_k_flush[] = "flush";
 static const char __pyx_k_range[] = "range";
 static const char __pyx_k_write[] = "write";
 static const char __pyx_k_append[] = "append";
 static const char __pyx_k_enable[] = "enable";
-static const char __pyx_k_length[] = "length";
 static const char __pyx_k_module[] = "__module__";
 static const char __pyx_k_reduce[] = "__reduce__";
 static const char __pyx_k_stream[] = "stream";
 static const char __pyx_k_disable[] = "disable";
+static const char __pyx_k_add_note[] = "add_note";
 static const char __pyx_k_getstate[] = "__getstate__";
 static const char __pyx_k_qualname[] = "__qualname__";
 static const char __pyx_k_set_name[] = "__set_name__";
@@ -2275,38 +2358,41 @@ static const char __pyx_k_reduce_ex[] = "__reduce_ex__";
 static const char __pyx_k_write_bit[] = "write_bit";
 static const char __pyx_k_A_4q_vQd_F[] = "\200A\330\010\013\2104\210q\330\014\020\220\007\220v\230Q\230d\240!\330\014\020\220\014\230F\240!";
 static const char __pyx_k_pyx_vtable[] = "__pyx_vtable__";
-static const char __pyx_k_write_bits[] = "write_bits";
 static const char __pyx_k_A_s_4_Rr_4q[] = "\200A\330\010\017\210s\220!\2204\220~\240R\240r\250\022\2504\250q";
 static const char __pyx_k_buffer_size[] = "buffer_size";
 static const char __pyx_k_flush_bytes[] = "flush_bytes";
+static const char __pyx_k_write_chunk[] = "write_chunk";
+static const char __pyx_k_bits_written[] = "bits_written";
 static const char __pyx_k_is_coroutine[] = "_is_coroutine";
 static const char __pyx_k_stringsource[] = "<stringsource>";
 static const char __pyx_k_bitwriter_pyx[] = "bitwriter.pyx";
-static const char __pyx_k_bytes_written[] = "bytes_written";
 static const char __pyx_k_reduce_cython[] = "__reduce_cython__";
-static const char __pyx_k_A_E_awb_D_E_Cr[] = "\200A\340\010\014\210E\220\025\220a\220w\230b\240\004\240D\250\001\330\014\020\220\n\230\"\230E\240\023\240C\240r\250\021";
+static const char __pyx_k_encoding_table[] = "encoding_table";
+static const char __pyx_k_A_4y_2T_G1D_1_L[] = "\200A\330\010\013\2104\210y\230\002\230!\340\014\020\320\020!\240\022\2402\240T\250\021\330\014\020\220\014\230G\2401\240D\250\001\330\014\020\220\013\2301\330\010\014\210L\230\001";
 static const char __pyx_k_setstate_cython[] = "__setstate_cython__";
+static const char __pyx_k_encoding_path_int[] = "encoding_path_int";
 static const char __pyx_k_asyncio_coroutines[] = "asyncio.coroutines";
 static const char __pyx_k_cline_in_traceback[] = "cline_in_traceback";
-static const char __pyx_k_A_4y_2T_G1D_Ba_a_1_L[] = "\200A\330\010\013\2104\210y\230\002\230!\330\014\020\320\020!\240\022\2402\240T\250\021\330\014\020\220\014\230G\2401\240D\250\014\260B\260a\330\014\020\220\016\230a\330\014\020\220\013\2301\330\010\014\210L\230\001";
 static const char __pyx_k_BufferedBitWriterNative[] = "BufferedBitWriterNative";
 static const char __pyx_k_BufferedBitWriterNative_flush[] = "BufferedBitWriterNative.flush";
-static const char __pyx_k_A_O4_3c_D_L_4y_1_G1D_Ba_a_1_s_4[] = "\200A\330\010\014\210O\2304\230|\2503\250c\260\023\260D\270\002\270!\330\010\014\210L\230\001\330\010\013\2104\210y\230\003\2301\330\014\020\220\014\230G\2401\240D\250\014\260B\260a\330\014\020\220\016\230a\330\014\020\220\013\2301\330\014\017\210s\220!\2204\220~\240S\250\004\250A\330\020\024\220L\240\001";
+static const char __pyx_k_A_O4_3c_D_L_4y_1_G1D_a_1_s_4_S_A[] = "\200A\360\010\000\t\r\210O\2304\230|\2503\250c\260\023\260D\270\002\270!\330\010\014\210L\230\001\330\010\013\2104\210y\230\003\2301\330\014\020\220\014\230G\2401\240D\250\001\330\014\020\220\016\230a\330\014\020\220\013\2301\330\014\017\210s\220!\2204\220~\240S\250\004\250A\330\020\024\220L\240\001";
+static const char __pyx_k_A_s_1_E_aq_Qa_as_9AQ_IQa_U_6_4t1[] = "\200A\360\020\000\t \230s\240!\2401\360\n\000\t\r\210E\220\025\220a\220q\330\014\021\220\024\220Q\220a\330\014\030\230\016\240a\240s\250!\330\014\023\2209\230A\230Q\330\014\024\220I\230Q\230a\360\006\000\r\021\220\r\230U\240!\2406\250\022\2504\250t\2601\330\020\033\2305\240\003\240;\250b\260\001\330\020\024\220J\230a\230q";
 static const char __pyx_k_BufferedBitWriterNative___reduce[] = "BufferedBitWriterNative.__reduce_cython__";
 static const char __pyx_k_BufferedBitWriterNative___setsta[] = "BufferedBitWriterNative.__setstate_cython__";
-static const char __pyx_k_BufferedBitWriterNative_bytes_wr[] = "BufferedBitWriterNative.bytes_written";
+static const char __pyx_k_BufferedBitWriterNative_bits_wri[] = "BufferedBitWriterNative.bits_written";
 static const char __pyx_k_BufferedBitWriterNative_flush_by[] = "BufferedBitWriterNative.flush_bytes";
 static const char __pyx_k_BufferedBitWriterNative_write_bi[] = "BufferedBitWriterNative.write_bit";
+static const char __pyx_k_BufferedBitWriterNative_write_ch[] = "BufferedBitWriterNative.write_chunk";
+static const char __pyx_k_Note_that_Cython_is_deliberately[] = "Note that Cython is deliberately stricter than PEP-484 and rejects subclasses of builtin types. If you need to pass subclasses then set the 'annotation_typing' directive to False.";
 static const char __pyx_k_no_default___reduce___due_to_non[] = "no default __reduce__ due to non-trivial __cinit__";
-static const char __pyx_k_BufferedBitWriterNative_write_bi_2[] = "BufferedBitWriterNative.write_bits";
 /* #### Code section: decls ### */
 static int __pyx_pf_9bitwriter_23BufferedBitWriterNative___cinit__(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self, PyObject *__pyx_v_stream, int __pyx_v_buffer_size); /* proto */
 static PyObject *__pyx_pf_9bitwriter_23BufferedBitWriterNative_7bit_pos___get__(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_9bitwriter_23BufferedBitWriterNative_2write_bit(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self, int __pyx_v_bit); /* proto */
-static PyObject *__pyx_pf_9bitwriter_23BufferedBitWriterNative_4write_bits(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self, unsigned int __pyx_v_bits, int __pyx_v_length); /* proto */
+static PyObject *__pyx_pf_9bitwriter_23BufferedBitWriterNative_4write_chunk(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self, PyObject *__pyx_v_text, PyObject *__pyx_v_encoding_table); /* proto */
 static PyObject *__pyx_pf_9bitwriter_23BufferedBitWriterNative_6flush_bytes(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_9bitwriter_23BufferedBitWriterNative_8flush(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_9bitwriter_23BufferedBitWriterNative_10bytes_written(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_9bitwriter_23BufferedBitWriterNative_10bits_written(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_9bitwriter_23BufferedBitWriterNative_12__reduce_cython__(CYTHON_UNUSED struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_9bitwriter_23BufferedBitWriterNative_14__setstate_cython__(CYTHON_UNUSED struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v___pyx_state); /* proto */
 static PyObject *__pyx_tp_new_9bitwriter_BufferedBitWriterNative(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
@@ -2348,11 +2434,12 @@ typedef struct {
   #ifdef __Pyx_Coroutine_USED
   PyTypeObject *__pyx_CoroutineType;
   #endif
+  PyTypeObject *__pyx_ptype_7cpython_4type_type;
   PyObject *__pyx_type_9bitwriter_BufferedBitWriterNative;
   PyTypeObject *__pyx_ptype_9bitwriter_BufferedBitWriterNative;
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_pop;
   PyObject *__pyx_codeobj_tab[7];
-  PyObject *__pyx_string_tab[52];
+  PyObject *__pyx_string_tab[55];
 /* #### Code section: module_state_contents ### */
 /* CommonTypesMetaclass.module_state_decls */
 PyTypeObject *__pyx_CommonTypesMetaclassType;
@@ -2394,54 +2481,57 @@ static __pyx_mstatetype * const __pyx_mstate_global = &__pyx_mstate_global_stati
 #define __pyx_n_u_BufferedBitWriterNative __pyx_string_tab[1]
 #define __pyx_n_u_BufferedBitWriterNative___reduce __pyx_string_tab[2]
 #define __pyx_n_u_BufferedBitWriterNative___setsta __pyx_string_tab[3]
-#define __pyx_n_u_BufferedBitWriterNative_bytes_wr __pyx_string_tab[4]
+#define __pyx_n_u_BufferedBitWriterNative_bits_wri __pyx_string_tab[4]
 #define __pyx_n_u_BufferedBitWriterNative_flush __pyx_string_tab[5]
 #define __pyx_n_u_BufferedBitWriterNative_flush_by __pyx_string_tab[6]
 #define __pyx_n_u_BufferedBitWriterNative_write_bi __pyx_string_tab[7]
-#define __pyx_n_u_BufferedBitWriterNative_write_bi_2 __pyx_string_tab[8]
-#define __pyx_n_u_TypeError __pyx_string_tab[9]
-#define __pyx_n_u_append __pyx_string_tab[10]
-#define __pyx_n_u_asyncio_coroutines __pyx_string_tab[11]
-#define __pyx_n_u_bit __pyx_string_tab[12]
-#define __pyx_n_u_bits __pyx_string_tab[13]
-#define __pyx_n_u_bitwriter __pyx_string_tab[14]
-#define __pyx_kp_u_bitwriter_pyx __pyx_string_tab[15]
-#define __pyx_n_u_buffer_size __pyx_string_tab[16]
-#define __pyx_n_u_bytes_written __pyx_string_tab[17]
-#define __pyx_n_u_clear __pyx_string_tab[18]
-#define __pyx_n_u_cline_in_traceback __pyx_string_tab[19]
-#define __pyx_kp_u_disable __pyx_string_tab[20]
-#define __pyx_kp_u_enable __pyx_string_tab[21]
-#define __pyx_n_u_flush __pyx_string_tab[22]
-#define __pyx_n_u_flush_bytes __pyx_string_tab[23]
-#define __pyx_n_u_func __pyx_string_tab[24]
-#define __pyx_kp_u_gc __pyx_string_tab[25]
-#define __pyx_n_u_getstate __pyx_string_tab[26]
-#define __pyx_n_u_is_coroutine __pyx_string_tab[27]
-#define __pyx_kp_u_isenabled __pyx_string_tab[28]
-#define __pyx_n_u_length __pyx_string_tab[29]
-#define __pyx_n_u_main __pyx_string_tab[30]
-#define __pyx_n_u_module __pyx_string_tab[31]
-#define __pyx_n_u_name __pyx_string_tab[32]
-#define __pyx_kp_u_no_default___reduce___due_to_non __pyx_string_tab[33]
-#define __pyx_n_u_pop __pyx_string_tab[34]
-#define __pyx_n_u_pyx_state __pyx_string_tab[35]
-#define __pyx_n_u_pyx_vtable __pyx_string_tab[36]
-#define __pyx_n_u_qualname __pyx_string_tab[37]
-#define __pyx_n_u_range __pyx_string_tab[38]
-#define __pyx_n_u_reduce __pyx_string_tab[39]
-#define __pyx_n_u_reduce_cython __pyx_string_tab[40]
-#define __pyx_n_u_reduce_ex __pyx_string_tab[41]
-#define __pyx_n_u_self __pyx_string_tab[42]
-#define __pyx_n_u_set_name __pyx_string_tab[43]
-#define __pyx_n_u_setstate __pyx_string_tab[44]
-#define __pyx_n_u_setstate_cython __pyx_string_tab[45]
-#define __pyx_n_u_stream __pyx_string_tab[46]
-#define __pyx_kp_u_stringsource __pyx_string_tab[47]
-#define __pyx_n_u_test __pyx_string_tab[48]
-#define __pyx_n_u_write __pyx_string_tab[49]
-#define __pyx_n_u_write_bit __pyx_string_tab[50]
-#define __pyx_n_u_write_bits __pyx_string_tab[51]
+#define __pyx_n_u_BufferedBitWriterNative_write_ch __pyx_string_tab[8]
+#define __pyx_kp_u_Note_that_Cython_is_deliberately __pyx_string_tab[9]
+#define __pyx_n_u_TypeError __pyx_string_tab[10]
+#define __pyx_kp_u_add_note __pyx_string_tab[11]
+#define __pyx_n_u_append __pyx_string_tab[12]
+#define __pyx_n_u_asyncio_coroutines __pyx_string_tab[13]
+#define __pyx_n_u_bit __pyx_string_tab[14]
+#define __pyx_n_u_bits_written __pyx_string_tab[15]
+#define __pyx_n_u_bitwriter __pyx_string_tab[16]
+#define __pyx_kp_u_bitwriter_pyx __pyx_string_tab[17]
+#define __pyx_n_u_buffer_size __pyx_string_tab[18]
+#define __pyx_n_u_clear __pyx_string_tab[19]
+#define __pyx_n_u_cline_in_traceback __pyx_string_tab[20]
+#define __pyx_kp_u_disable __pyx_string_tab[21]
+#define __pyx_kp_u_enable __pyx_string_tab[22]
+#define __pyx_n_u_encoding_path_int __pyx_string_tab[23]
+#define __pyx_n_u_encoding_table __pyx_string_tab[24]
+#define __pyx_n_u_flush __pyx_string_tab[25]
+#define __pyx_n_u_flush_bytes __pyx_string_tab[26]
+#define __pyx_n_u_func __pyx_string_tab[27]
+#define __pyx_kp_u_gc __pyx_string_tab[28]
+#define __pyx_n_u_getstate __pyx_string_tab[29]
+#define __pyx_n_u_is_coroutine __pyx_string_tab[30]
+#define __pyx_kp_u_isenabled __pyx_string_tab[31]
+#define __pyx_n_u_main __pyx_string_tab[32]
+#define __pyx_n_u_module __pyx_string_tab[33]
+#define __pyx_n_u_name __pyx_string_tab[34]
+#define __pyx_kp_u_no_default___reduce___due_to_non __pyx_string_tab[35]
+#define __pyx_n_u_pop __pyx_string_tab[36]
+#define __pyx_n_u_pyx_state __pyx_string_tab[37]
+#define __pyx_n_u_pyx_vtable __pyx_string_tab[38]
+#define __pyx_n_u_qualname __pyx_string_tab[39]
+#define __pyx_n_u_range __pyx_string_tab[40]
+#define __pyx_n_u_reduce __pyx_string_tab[41]
+#define __pyx_n_u_reduce_cython __pyx_string_tab[42]
+#define __pyx_n_u_reduce_ex __pyx_string_tab[43]
+#define __pyx_n_u_self __pyx_string_tab[44]
+#define __pyx_n_u_set_name __pyx_string_tab[45]
+#define __pyx_n_u_setstate __pyx_string_tab[46]
+#define __pyx_n_u_setstate_cython __pyx_string_tab[47]
+#define __pyx_n_u_stream __pyx_string_tab[48]
+#define __pyx_kp_u_stringsource __pyx_string_tab[49]
+#define __pyx_n_u_test __pyx_string_tab[50]
+#define __pyx_n_u_text __pyx_string_tab[51]
+#define __pyx_n_u_write __pyx_string_tab[52]
+#define __pyx_n_u_write_bit __pyx_string_tab[53]
+#define __pyx_n_u_write_chunk __pyx_string_tab[54]
 /* #### Code section: module_state_clear ### */
 #if CYTHON_USE_MODULE_STATE
 static CYTHON_SMALL_CODE int __pyx_m_clear(PyObject *m) {
@@ -2462,10 +2552,11 @@ static CYTHON_SMALL_CODE int __pyx_m_clear(PyObject *m) {
   #if CYTHON_PEP489_MULTI_PHASE_INIT
   __Pyx_State_RemoveModule(NULL);
   #endif
+  Py_CLEAR(clear_module_state->__pyx_ptype_7cpython_4type_type);
   Py_CLEAR(clear_module_state->__pyx_ptype_9bitwriter_BufferedBitWriterNative);
   Py_CLEAR(clear_module_state->__pyx_type_9bitwriter_BufferedBitWriterNative);
   for (int i=0; i<7; ++i) { Py_CLEAR(clear_module_state->__pyx_codeobj_tab[i]); }
-  for (int i=0; i<52; ++i) { Py_CLEAR(clear_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<55; ++i) { Py_CLEAR(clear_module_state->__pyx_string_tab[i]); }
   return 0;
 }
 #endif
@@ -2486,19 +2577,20 @@ static CYTHON_SMALL_CODE int __pyx_m_traverse(PyObject *m, visitproc visit, void
   #ifdef __Pyx_FusedFunction_USED
   Py_VISIT(traverse_module_state->__pyx_FusedFunctionType);
   #endif
+  Py_VISIT(traverse_module_state->__pyx_ptype_7cpython_4type_type);
   Py_VISIT(traverse_module_state->__pyx_ptype_9bitwriter_BufferedBitWriterNative);
   Py_VISIT(traverse_module_state->__pyx_type_9bitwriter_BufferedBitWriterNative);
   for (int i=0; i<7; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_codeobj_tab[i]); }
-  for (int i=0; i<52; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<55; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_string_tab[i]); }
   return 0;
 }
 #endif
 /* #### Code section: module_code ### */
 
-/* "bitwriter.pyx":8
- *     cdef int buffer_size
+/* "bitwriter.pyx":15
+ *         int buffer_size             # Flush after this many bytes in byte_buffer
  * 
- *     def __cinit__(self, stream, int buffer_size=4096):  # Removed type annotation             # <<<<<<<<<<<<<<
+ *     def __cinit__(self, stream, int buffer_size=4096):             # <<<<<<<<<<<<<<
  *         self.stream = stream
  *         self.byte_buffer = bytearray()
 */
@@ -2526,48 +2618,48 @@ static int __pyx_pw_9bitwriter_23BufferedBitWriterNative_1__cinit__(PyObject *__
   {
     PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_stream,&__pyx_mstate_global->__pyx_n_u_buffer_size,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_VARARGS(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 8, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 15, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  2:
         values[1] = __Pyx_ArgRef_VARARGS(__pyx_args, 1);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 8, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 15, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  1:
         values[0] = __Pyx_ArgRef_VARARGS(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 8, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 15, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "__cinit__", 0) < 0) __PYX_ERR(0, 8, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "__cinit__", 0) < 0) __PYX_ERR(0, 15, __pyx_L3_error)
       for (Py_ssize_t i = __pyx_nargs; i < 1; i++) {
-        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("__cinit__", 0, 1, 2, i); __PYX_ERR(0, 8, __pyx_L3_error) }
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("__cinit__", 0, 1, 2, i); __PYX_ERR(0, 15, __pyx_L3_error) }
       }
     } else {
       switch (__pyx_nargs) {
         case  2:
         values[1] = __Pyx_ArgRef_VARARGS(__pyx_args, 1);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 8, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 15, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  1:
         values[0] = __Pyx_ArgRef_VARARGS(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 8, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 15, __pyx_L3_error)
         break;
         default: goto __pyx_L5_argtuple_error;
       }
     }
     __pyx_v_stream = values[0];
     if (values[1]) {
-      __pyx_v_buffer_size = __Pyx_PyLong_As_int(values[1]); if (unlikely((__pyx_v_buffer_size == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 8, __pyx_L3_error)
+      __pyx_v_buffer_size = __Pyx_PyLong_As_int(values[1]); if (unlikely((__pyx_v_buffer_size == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 15, __pyx_L3_error)
     } else {
       __pyx_v_buffer_size = ((int)0x1000);
     }
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__cinit__", 0, 1, 2, __pyx_nargs); __PYX_ERR(0, 8, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__cinit__", 0, 1, 2, __pyx_nargs); __PYX_ERR(0, 15, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -2600,9 +2692,9 @@ static int __pyx_pf_9bitwriter_23BufferedBitWriterNative___cinit__(struct __pyx_
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__cinit__", 0);
 
-  /* "bitwriter.pyx":9
+  /* "bitwriter.pyx":16
  * 
- *     def __cinit__(self, stream, int buffer_size=4096):  # Removed type annotation
+ *     def __cinit__(self, stream, int buffer_size=4096):
  *         self.stream = stream             # <<<<<<<<<<<<<<
  *         self.byte_buffer = bytearray()
  *         self.bit_buffer = 0
@@ -2613,8 +2705,8 @@ static int __pyx_pf_9bitwriter_23BufferedBitWriterNative___cinit__(struct __pyx_
   __Pyx_DECREF(__pyx_v_self->stream);
   __pyx_v_self->stream = __pyx_v_stream;
 
-  /* "bitwriter.pyx":10
- *     def __cinit__(self, stream, int buffer_size=4096):  # Removed type annotation
+  /* "bitwriter.pyx":17
+ *     def __cinit__(self, stream, int buffer_size=4096):
  *         self.stream = stream
  *         self.byte_buffer = bytearray()             # <<<<<<<<<<<<<<
  *         self.bit_buffer = 0
@@ -2629,7 +2721,7 @@ static int __pyx_pf_9bitwriter_23BufferedBitWriterNative___cinit__(struct __pyx_
     __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+__pyx_t_4, (1-__pyx_t_4) | (__pyx_t_4*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 10, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 17, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
   }
   __Pyx_GIVEREF(__pyx_t_1);
@@ -2638,7 +2730,7 @@ static int __pyx_pf_9bitwriter_23BufferedBitWriterNative___cinit__(struct __pyx_
   __pyx_v_self->byte_buffer = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "bitwriter.pyx":11
+  /* "bitwriter.pyx":18
  *         self.stream = stream
  *         self.byte_buffer = bytearray()
  *         self.bit_buffer = 0             # <<<<<<<<<<<<<<
@@ -2647,7 +2739,7 @@ static int __pyx_pf_9bitwriter_23BufferedBitWriterNative___cinit__(struct __pyx_
 */
   __pyx_v_self->bit_buffer = 0;
 
-  /* "bitwriter.pyx":12
+  /* "bitwriter.pyx":19
  *         self.byte_buffer = bytearray()
  *         self.bit_buffer = 0
  *         self.bit_pos = 0             # <<<<<<<<<<<<<<
@@ -2656,7 +2748,7 @@ static int __pyx_pf_9bitwriter_23BufferedBitWriterNative___cinit__(struct __pyx_
 */
   __pyx_v_self->bit_pos = 0;
 
-  /* "bitwriter.pyx":13
+  /* "bitwriter.pyx":20
  *         self.bit_buffer = 0
  *         self.bit_pos = 0
  *         self.buffer_size = buffer_size             # <<<<<<<<<<<<<<
@@ -2665,10 +2757,10 @@ static int __pyx_pf_9bitwriter_23BufferedBitWriterNative___cinit__(struct __pyx_
 */
   __pyx_v_self->buffer_size = __pyx_v_buffer_size;
 
-  /* "bitwriter.pyx":8
- *     cdef int buffer_size
+  /* "bitwriter.pyx":15
+ *         int buffer_size             # Flush after this many bytes in byte_buffer
  * 
- *     def __cinit__(self, stream, int buffer_size=4096):  # Removed type annotation             # <<<<<<<<<<<<<<
+ *     def __cinit__(self, stream, int buffer_size=4096):             # <<<<<<<<<<<<<<
  *         self.stream = stream
  *         self.byte_buffer = bytearray()
 */
@@ -2687,7 +2779,7 @@ static int __pyx_pf_9bitwriter_23BufferedBitWriterNative___cinit__(struct __pyx_
   return __pyx_r;
 }
 
-/* "bitwriter.pyx":15
+/* "bitwriter.pyx":22
  *         self.buffer_size = buffer_size
  * 
  *     @property             # <<<<<<<<<<<<<<
@@ -2719,21 +2811,21 @@ static PyObject *__pyx_pf_9bitwriter_23BufferedBitWriterNative_7bit_pos___get__(
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__get__", 0);
 
-  /* "bitwriter.pyx":17
+  /* "bitwriter.pyx":24
  *     @property
  *     def bit_pos(self):
  *         return self.bit_pos             # <<<<<<<<<<<<<<
  * 
- *     cpdef void write_bit(self, int bit):
+ *     @cython.boundscheck(False)
 */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PyLong_From_int(__pyx_v_self->bit_pos); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 17, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyLong_From_int(__pyx_v_self->bit_pos); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 24, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "bitwriter.pyx":15
+  /* "bitwriter.pyx":22
  *         self.buffer_size = buffer_size
  * 
  *     @property             # <<<<<<<<<<<<<<
@@ -2752,12 +2844,12 @@ static PyObject *__pyx_pf_9bitwriter_23BufferedBitWriterNative_7bit_pos___get__(
   return __pyx_r;
 }
 
-/* "bitwriter.pyx":19
+/* "bitwriter.pyx":26
  *         return self.bit_pos
  * 
- *     cpdef void write_bit(self, int bit):             # <<<<<<<<<<<<<<
- *         self.bit_buffer = (self.bit_buffer << 1) | (bit & 1)
- *         self.bit_pos += 1
+ *     @cython.boundscheck(False)             # <<<<<<<<<<<<<<
+ *     @cython.wraparound(False)
+ *     cpdef write_bit(self, int bit):
 */
 
 static PyObject *__pyx_pw_9bitwriter_23BufferedBitWriterNative_3write_bit(PyObject *__pyx_v_self, 
@@ -2767,7 +2859,8 @@ PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static void __pyx_f_9bitwriter_23BufferedBitWriterNative_write_bit(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self, int __pyx_v_bit, int __pyx_skip_dispatch) {
+static PyObject *__pyx_f_9bitwriter_23BufferedBitWriterNative_write_bit(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self, int __pyx_v_bit, int __pyx_skip_dispatch) {
+  PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   PyObject *__pyx_t_2 = NULL;
@@ -2798,13 +2891,14 @@ static void __pyx_f_9bitwriter_23BufferedBitWriterNative_write_bit(struct __pyx_
     if (unlikely(!__Pyx_object_dict_version_matches(((PyObject *)__pyx_v_self), __pyx_tp_dict_version, __pyx_obj_dict_version))) {
       PY_UINT64_T __pyx_typedict_guard = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
       #endif
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_mstate_global->__pyx_n_u_write_bit); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 19, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_mstate_global->__pyx_n_u_write_bit); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 26, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       if (!__Pyx_IsSameCFunction(__pyx_t_1, (void(*)(void)) __pyx_pw_9bitwriter_23BufferedBitWriterNative_3write_bit)) {
+        __Pyx_XDECREF(__pyx_r);
         __pyx_t_3 = NULL;
         __Pyx_INCREF(__pyx_t_1);
         __pyx_t_4 = __pyx_t_1; 
-        __pyx_t_5 = __Pyx_PyLong_From_int(__pyx_v_bit); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 19, __pyx_L1_error)
+        __pyx_t_5 = __Pyx_PyLong_From_int(__pyx_v_bit); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 26, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_5);
         __pyx_t_6 = 1;
         #if CYTHON_UNPACK_METHODS
@@ -2824,10 +2918,11 @@ static void __pyx_f_9bitwriter_23BufferedBitWriterNative_write_bit(struct __pyx_
           __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
           __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
           __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-          if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 19, __pyx_L1_error)
+          if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 26, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
         }
-        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+        __pyx_r = __pyx_t_2;
+        __pyx_t_2 = 0;
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
         goto __pyx_L0;
       }
@@ -2844,54 +2939,54 @@ static void __pyx_f_9bitwriter_23BufferedBitWriterNative_write_bit(struct __pyx_
     #endif
   }
 
-  /* "bitwriter.pyx":20
- * 
- *     cpdef void write_bit(self, int bit):
+  /* "bitwriter.pyx":30
+ *     cpdef write_bit(self, int bit):
+ *         # bit must be 0 or 1
  *         self.bit_buffer = (self.bit_buffer << 1) | (bit & 1)             # <<<<<<<<<<<<<<
  *         self.bit_pos += 1
  *         if self.bit_pos == 8:
 */
   __pyx_v_self->bit_buffer = ((__pyx_v_self->bit_buffer << 1) | (__pyx_v_bit & 1));
 
-  /* "bitwriter.pyx":21
- *     cpdef void write_bit(self, int bit):
+  /* "bitwriter.pyx":31
+ *         # bit must be 0 or 1
  *         self.bit_buffer = (self.bit_buffer << 1) | (bit & 1)
  *         self.bit_pos += 1             # <<<<<<<<<<<<<<
  *         if self.bit_pos == 8:
- *             self.byte_buffer.append(self.bit_buffer & 0xFF)
+ *             self.byte_buffer.append(self.bit_buffer)
 */
   __pyx_v_self->bit_pos = (__pyx_v_self->bit_pos + 1);
 
-  /* "bitwriter.pyx":22
+  /* "bitwriter.pyx":32
  *         self.bit_buffer = (self.bit_buffer << 1) | (bit & 1)
  *         self.bit_pos += 1
  *         if self.bit_pos == 8:             # <<<<<<<<<<<<<<
- *             self.byte_buffer.append(self.bit_buffer & 0xFF)
+ *             self.byte_buffer.append(self.bit_buffer)
  *             self.bit_buffer = 0
 */
   __pyx_t_7 = (__pyx_v_self->bit_pos == 8);
   if (__pyx_t_7) {
 
-    /* "bitwriter.pyx":23
+    /* "bitwriter.pyx":33
  *         self.bit_pos += 1
  *         if self.bit_pos == 8:
- *             self.byte_buffer.append(self.bit_buffer & 0xFF)             # <<<<<<<<<<<<<<
+ *             self.byte_buffer.append(self.bit_buffer)             # <<<<<<<<<<<<<<
  *             self.bit_buffer = 0
  *             self.bit_pos = 0
 */
-    __pyx_t_8 = __Pyx_PyByteArray_Append(__pyx_v_self->byte_buffer, (__pyx_v_self->bit_buffer & 0xFF)); if (unlikely(__pyx_t_8 == ((int)-1))) __PYX_ERR(0, 23, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyByteArray_Append(__pyx_v_self->byte_buffer, __pyx_v_self->bit_buffer); if (unlikely(__pyx_t_8 == ((int)-1))) __PYX_ERR(0, 33, __pyx_L1_error)
 
-    /* "bitwriter.pyx":24
+    /* "bitwriter.pyx":34
  *         if self.bit_pos == 8:
- *             self.byte_buffer.append(self.bit_buffer & 0xFF)
+ *             self.byte_buffer.append(self.bit_buffer)
  *             self.bit_buffer = 0             # <<<<<<<<<<<<<<
  *             self.bit_pos = 0
  *             if len(self.byte_buffer) >= self.buffer_size:
 */
     __pyx_v_self->bit_buffer = 0;
 
-    /* "bitwriter.pyx":25
- *             self.byte_buffer.append(self.bit_buffer & 0xFF)
+    /* "bitwriter.pyx":35
+ *             self.byte_buffer.append(self.bit_buffer)
  *             self.bit_buffer = 0
  *             self.bit_pos = 0             # <<<<<<<<<<<<<<
  *             if len(self.byte_buffer) >= self.buffer_size:
@@ -2899,7 +2994,7 @@ static void __pyx_f_9bitwriter_23BufferedBitWriterNative_write_bit(struct __pyx_
 */
     __pyx_v_self->bit_pos = 0;
 
-    /* "bitwriter.pyx":26
+    /* "bitwriter.pyx":36
  *             self.bit_buffer = 0
  *             self.bit_pos = 0
  *             if len(self.byte_buffer) >= self.buffer_size:             # <<<<<<<<<<<<<<
@@ -2910,23 +3005,25 @@ static void __pyx_f_9bitwriter_23BufferedBitWriterNative_write_bit(struct __pyx_
     __Pyx_INCREF(__pyx_t_1);
     if (unlikely(__pyx_t_1 == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-      __PYX_ERR(0, 26, __pyx_L1_error)
+      __PYX_ERR(0, 36, __pyx_L1_error)
     }
-    __pyx_t_9 = __Pyx_PyByteArray_GET_SIZE(__pyx_t_1); if (unlikely(__pyx_t_9 == ((Py_ssize_t)-1))) __PYX_ERR(0, 26, __pyx_L1_error)
+    __pyx_t_9 = __Pyx_PyByteArray_GET_SIZE(__pyx_t_1); if (unlikely(__pyx_t_9 == ((Py_ssize_t)-1))) __PYX_ERR(0, 36, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __pyx_t_7 = (__pyx_t_9 >= __pyx_v_self->buffer_size);
     if (__pyx_t_7) {
 
-      /* "bitwriter.pyx":27
+      /* "bitwriter.pyx":37
  *             self.bit_pos = 0
  *             if len(self.byte_buffer) >= self.buffer_size:
  *                 self.flush_bytes()             # <<<<<<<<<<<<<<
  * 
- *     cpdef void write_bits(self, unsigned int bits, int length):
+ *     @cython.boundscheck(False)
 */
-      ((struct __pyx_vtabstruct_9bitwriter_BufferedBitWriterNative *)__pyx_v_self->__pyx_vtab)->flush_bytes(__pyx_v_self, 0); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 27, __pyx_L1_error)
+      __pyx_t_1 = ((struct __pyx_vtabstruct_9bitwriter_BufferedBitWriterNative *)__pyx_v_self->__pyx_vtab)->flush_bytes(__pyx_v_self, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 37, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-      /* "bitwriter.pyx":26
+      /* "bitwriter.pyx":36
  *             self.bit_buffer = 0
  *             self.bit_pos = 0
  *             if len(self.byte_buffer) >= self.buffer_size:             # <<<<<<<<<<<<<<
@@ -2935,24 +3032,25 @@ static void __pyx_f_9bitwriter_23BufferedBitWriterNative_write_bit(struct __pyx_
 */
     }
 
-    /* "bitwriter.pyx":22
+    /* "bitwriter.pyx":32
  *         self.bit_buffer = (self.bit_buffer << 1) | (bit & 1)
  *         self.bit_pos += 1
  *         if self.bit_pos == 8:             # <<<<<<<<<<<<<<
- *             self.byte_buffer.append(self.bit_buffer & 0xFF)
+ *             self.byte_buffer.append(self.bit_buffer)
  *             self.bit_buffer = 0
 */
   }
 
-  /* "bitwriter.pyx":19
+  /* "bitwriter.pyx":26
  *         return self.bit_pos
  * 
- *     cpdef void write_bit(self, int bit):             # <<<<<<<<<<<<<<
- *         self.bit_buffer = (self.bit_buffer << 1) | (bit & 1)
- *         self.bit_pos += 1
+ *     @cython.boundscheck(False)             # <<<<<<<<<<<<<<
+ *     @cython.wraparound(False)
+ *     cpdef write_bit(self, int bit):
 */
 
   /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
   goto __pyx_L0;
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
@@ -2961,8 +3059,11 @@ static void __pyx_f_9bitwriter_23BufferedBitWriterNative_write_bit(struct __pyx_
   __Pyx_XDECREF(__pyx_t_4);
   __Pyx_XDECREF(__pyx_t_5);
   __Pyx_AddTraceback("bitwriter.BufferedBitWriterNative.write_bit", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
   __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
+  return __pyx_r;
 }
 
 /* Python wrapper */
@@ -3004,32 +3105,32 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   {
     PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_bit,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 19, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 26, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 19, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 26, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "write_bit", 0) < 0) __PYX_ERR(0, 19, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "write_bit", 0) < 0) __PYX_ERR(0, 26, __pyx_L3_error)
       for (Py_ssize_t i = __pyx_nargs; i < 1; i++) {
-        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("write_bit", 1, 1, 1, i); __PYX_ERR(0, 19, __pyx_L3_error) }
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("write_bit", 1, 1, 1, i); __PYX_ERR(0, 26, __pyx_L3_error) }
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 19, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 26, __pyx_L3_error)
     }
-    __pyx_v_bit = __Pyx_PyLong_As_int(values[0]); if (unlikely((__pyx_v_bit == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 19, __pyx_L3_error)
+    __pyx_v_bit = __Pyx_PyLong_As_int(values[0]); if (unlikely((__pyx_v_bit == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 28, __pyx_L3_error)
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("write_bit", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 19, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("write_bit", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 26, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -3059,8 +3160,7 @@ static PyObject *__pyx_pf_9bitwriter_23BufferedBitWriterNative_2write_bit(struct
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("write_bit", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_f_9bitwriter_23BufferedBitWriterNative_write_bit(__pyx_v_self, __pyx_v_bit, 1); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 19, __pyx_L1_error)
-  __pyx_t_1 = __Pyx_void_to_None(NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 19, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_9bitwriter_23BufferedBitWriterNative_write_bit(__pyx_v_self, __pyx_v_bit, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 26, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -3077,36 +3177,45 @@ static PyObject *__pyx_pf_9bitwriter_23BufferedBitWriterNative_2write_bit(struct
   return __pyx_r;
 }
 
-/* "bitwriter.pyx":29
+/* "bitwriter.pyx":39
  *                 self.flush_bytes()
  * 
- *     cpdef void write_bits(self, unsigned int bits, int length):             # <<<<<<<<<<<<<<
- *         cdef int i
- *         for i in range(length - 1, -1, -1):
+ *     @cython.boundscheck(False)             # <<<<<<<<<<<<<<
+ *     @cython.wraparound(False)
+ *     cpdef write_chunk(self, text, dict encoding_table):
 */
 
-static PyObject *__pyx_pw_9bitwriter_23BufferedBitWriterNative_5write_bits(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_9bitwriter_23BufferedBitWriterNative_5write_chunk(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static void __pyx_f_9bitwriter_23BufferedBitWriterNative_write_bits(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self, unsigned int __pyx_v_bits, int __pyx_v_length, int __pyx_skip_dispatch) {
-  int __pyx_v_i;
+static PyObject *__pyx_f_9bitwriter_23BufferedBitWriterNative_write_chunk(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self, PyObject *__pyx_v_text, PyObject *__pyx_v_encoding_table, int __pyx_skip_dispatch) {
+  Py_ssize_t __pyx_v_i;
+  Py_ssize_t __pyx_v_n;
+  PyObject *__pyx_v_ch = 0;
+  PyObject *__pyx_v_path_info = 0;
+  int __pyx_v_path;
+  int __pyx_v_steps;
+  int __pyx_v_bit_index;
+  int __pyx_v_bit_val;
+  PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   PyObject *__pyx_t_2 = NULL;
   PyObject *__pyx_t_3 = NULL;
   PyObject *__pyx_t_4 = NULL;
-  PyObject *__pyx_t_5 = NULL;
-  PyObject *__pyx_t_6 = NULL;
-  size_t __pyx_t_7;
-  int __pyx_t_8;
+  size_t __pyx_t_5;
+  Py_ssize_t __pyx_t_6;
+  Py_ssize_t __pyx_t_7;
+  Py_ssize_t __pyx_t_8;
+  int __pyx_t_9;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("write_bits", 0);
+  __Pyx_RefNannySetupContext("write_chunk", 0);
   /* Check if called by wrapper */
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overridden in Python */
@@ -3123,17 +3232,14 @@ static void __pyx_f_9bitwriter_23BufferedBitWriterNative_write_bits(struct __pyx
     if (unlikely(!__Pyx_object_dict_version_matches(((PyObject *)__pyx_v_self), __pyx_tp_dict_version, __pyx_obj_dict_version))) {
       PY_UINT64_T __pyx_typedict_guard = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
       #endif
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_mstate_global->__pyx_n_u_write_bits); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 29, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_mstate_global->__pyx_n_u_write_chunk); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 39, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
-      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void(*)(void)) __pyx_pw_9bitwriter_23BufferedBitWriterNative_5write_bits)) {
+      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void(*)(void)) __pyx_pw_9bitwriter_23BufferedBitWriterNative_5write_chunk)) {
+        __Pyx_XDECREF(__pyx_r);
         __pyx_t_3 = NULL;
         __Pyx_INCREF(__pyx_t_1);
         __pyx_t_4 = __pyx_t_1; 
-        __pyx_t_5 = __Pyx_PyLong_From_unsigned_int(__pyx_v_bits); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 29, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_5);
-        __pyx_t_6 = __Pyx_PyLong_From_int(__pyx_v_length); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 29, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_6);
-        __pyx_t_7 = 1;
+        __pyx_t_5 = 1;
         #if CYTHON_UNPACK_METHODS
         if (unlikely(PyMethod_Check(__pyx_t_4))) {
           __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_4);
@@ -3142,20 +3248,19 @@ static void __pyx_f_9bitwriter_23BufferedBitWriterNative_write_bits(struct __pyx
           __Pyx_INCREF(__pyx_t_3);
           __Pyx_INCREF(__pyx__function);
           __Pyx_DECREF_SET(__pyx_t_4, __pyx__function);
-          __pyx_t_7 = 0;
+          __pyx_t_5 = 0;
         }
         #endif
         {
-          PyObject *__pyx_callargs[3] = {__pyx_t_3, __pyx_t_5, __pyx_t_6};
-          __pyx_t_2 = __Pyx_PyObject_FastCall(__pyx_t_4, __pyx_callargs+__pyx_t_7, (3-__pyx_t_7) | (__pyx_t_7*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+          PyObject *__pyx_callargs[3] = {__pyx_t_3, __pyx_v_text, __pyx_v_encoding_table};
+          __pyx_t_2 = __Pyx_PyObject_FastCall(__pyx_t_4, __pyx_callargs+__pyx_t_5, (3-__pyx_t_5) | (__pyx_t_5*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
           __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-          __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-          __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
           __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-          if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 29, __pyx_L1_error)
+          if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 39, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
         }
-        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+        __pyx_r = __pyx_t_2;
+        __pyx_t_2 = 0;
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
         goto __pyx_L0;
       }
@@ -3172,66 +3277,165 @@ static void __pyx_f_9bitwriter_23BufferedBitWriterNative_write_bits(struct __pyx
     #endif
   }
 
-  /* "bitwriter.pyx":31
- *     cpdef void write_bits(self, unsigned int bits, int length):
- *         cdef int i
- *         for i in range(length - 1, -1, -1):             # <<<<<<<<<<<<<<
- *             self.write_bit((bits >> i) & 1)
- * 
+  /* "bitwriter.pyx":47
+ *                         Node.encoding_path_int = (int path, int length)
+ *         """
+ *         cdef Py_ssize_t i, n = len(text)             # <<<<<<<<<<<<<<
+ *         cdef object ch
+ *         cdef tuple path_info
 */
-  for (__pyx_t_8 = (__pyx_v_length - 1); __pyx_t_8 > -1; __pyx_t_8-=1) {
+  __pyx_t_6 = PyObject_Length(__pyx_v_text); if (unlikely(__pyx_t_6 == ((Py_ssize_t)-1))) __PYX_ERR(0, 47, __pyx_L1_error)
+  __pyx_v_n = __pyx_t_6;
+
+  /* "bitwriter.pyx":52
+ *         cdef int path, steps, bit_index, bit_val
+ * 
+ *         for i in range(n):             # <<<<<<<<<<<<<<
+ *             ch = text[i]
+ *             path_info = encoding_table[ch].encoding_path_int
+*/
+  __pyx_t_6 = __pyx_v_n;
+  __pyx_t_7 = __pyx_t_6;
+  for (__pyx_t_8 = 0; __pyx_t_8 < __pyx_t_7; __pyx_t_8+=1) {
     __pyx_v_i = __pyx_t_8;
 
-    /* "bitwriter.pyx":32
- *         cdef int i
- *         for i in range(length - 1, -1, -1):
- *             self.write_bit((bits >> i) & 1)             # <<<<<<<<<<<<<<
+    /* "bitwriter.pyx":53
  * 
- *     cpdef void flush_bytes(self):
+ *         for i in range(n):
+ *             ch = text[i]             # <<<<<<<<<<<<<<
+ *             path_info = encoding_table[ch].encoding_path_int
+ *             path = path_info[0]
 */
-    ((struct __pyx_vtabstruct_9bitwriter_BufferedBitWriterNative *)__pyx_v_self->__pyx_vtab)->write_bit(__pyx_v_self, ((__pyx_v_bits >> __pyx_v_i) & 1), 0); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 32, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_text, __pyx_v_i, Py_ssize_t, 1, PyLong_FromSsize_t, 0, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 53, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_XDECREF_SET(__pyx_v_ch, __pyx_t_1);
+    __pyx_t_1 = 0;
+
+    /* "bitwriter.pyx":54
+ *         for i in range(n):
+ *             ch = text[i]
+ *             path_info = encoding_table[ch].encoding_path_int             # <<<<<<<<<<<<<<
+ *             path = path_info[0]
+ *             steps = path_info[1]
+*/
+    if (unlikely(__pyx_v_encoding_table == Py_None)) {
+      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+      __PYX_ERR(0, 54, __pyx_L1_error)
+    }
+    __pyx_t_1 = __Pyx_PyDict_GetItem(__pyx_v_encoding_table, __pyx_v_ch); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 54, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_encoding_path_int); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 54, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    if (!(likely(PyTuple_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None) || __Pyx_RaiseUnexpectedTypeError("tuple", __pyx_t_2))) __PYX_ERR(0, 54, __pyx_L1_error)
+    __Pyx_XDECREF_SET(__pyx_v_path_info, ((PyObject*)__pyx_t_2));
+    __pyx_t_2 = 0;
+
+    /* "bitwriter.pyx":55
+ *             ch = text[i]
+ *             path_info = encoding_table[ch].encoding_path_int
+ *             path = path_info[0]             # <<<<<<<<<<<<<<
+ *             steps = path_info[1]
+ * 
+*/
+    if (unlikely(__pyx_v_path_info == Py_None)) {
+      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+      __PYX_ERR(0, 55, __pyx_L1_error)
+    }
+    __pyx_t_9 = __Pyx_PyLong_As_int(__Pyx_PyTuple_GET_ITEM(__pyx_v_path_info, 0)); if (unlikely((__pyx_t_9 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 55, __pyx_L1_error)
+    __pyx_v_path = __pyx_t_9;
+
+    /* "bitwriter.pyx":56
+ *             path_info = encoding_table[ch].encoding_path_int
+ *             path = path_info[0]
+ *             steps = path_info[1]             # <<<<<<<<<<<<<<
+ * 
+ *             # write bits from most significant to least significant
+*/
+    if (unlikely(__pyx_v_path_info == Py_None)) {
+      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+      __PYX_ERR(0, 56, __pyx_L1_error)
+    }
+    __pyx_t_9 = __Pyx_PyLong_As_int(__Pyx_PyTuple_GET_ITEM(__pyx_v_path_info, 1)); if (unlikely((__pyx_t_9 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 56, __pyx_L1_error)
+    __pyx_v_steps = __pyx_t_9;
+
+    /* "bitwriter.pyx":59
+ * 
+ *             # write bits from most significant to least significant
+ *             for bit_index in range(steps - 1, -1, -1):             # <<<<<<<<<<<<<<
+ *                 bit_val = (path >> bit_index) & 1
+ *                 self.write_bit(bit_val)
+*/
+    for (__pyx_t_9 = (__pyx_v_steps - 1); __pyx_t_9 > -1; __pyx_t_9-=1) {
+      __pyx_v_bit_index = __pyx_t_9;
+
+      /* "bitwriter.pyx":60
+ *             # write bits from most significant to least significant
+ *             for bit_index in range(steps - 1, -1, -1):
+ *                 bit_val = (path >> bit_index) & 1             # <<<<<<<<<<<<<<
+ *                 self.write_bit(bit_val)
+ * 
+*/
+      __pyx_v_bit_val = ((__pyx_v_path >> __pyx_v_bit_index) & 1);
+
+      /* "bitwriter.pyx":61
+ *             for bit_index in range(steps - 1, -1, -1):
+ *                 bit_val = (path >> bit_index) & 1
+ *                 self.write_bit(bit_val)             # <<<<<<<<<<<<<<
+ * 
+ *     cpdef flush_bytes(self):
+*/
+      __pyx_t_2 = ((struct __pyx_vtabstruct_9bitwriter_BufferedBitWriterNative *)__pyx_v_self->__pyx_vtab)->write_bit(__pyx_v_self, __pyx_v_bit_val, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 61, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    }
   }
 
-  /* "bitwriter.pyx":29
+  /* "bitwriter.pyx":39
  *                 self.flush_bytes()
  * 
- *     cpdef void write_bits(self, unsigned int bits, int length):             # <<<<<<<<<<<<<<
- *         cdef int i
- *         for i in range(length - 1, -1, -1):
+ *     @cython.boundscheck(False)             # <<<<<<<<<<<<<<
+ *     @cython.wraparound(False)
+ *     cpdef write_chunk(self, text, dict encoding_table):
 */
 
   /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
   goto __pyx_L0;
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_AddTraceback("bitwriter.BufferedBitWriterNative.write_bits", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("bitwriter.BufferedBitWriterNative.write_chunk", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
   __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_ch);
+  __Pyx_XDECREF(__pyx_v_path_info);
+  __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
+  return __pyx_r;
 }
 
 /* Python wrapper */
-static PyObject *__pyx_pw_9bitwriter_23BufferedBitWriterNative_5write_bits(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_9bitwriter_23BufferedBitWriterNative_5write_chunk(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_9bitwriter_23BufferedBitWriterNative_5write_bits = {"write_bits", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9bitwriter_23BufferedBitWriterNative_5write_bits, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_9bitwriter_23BufferedBitWriterNative_5write_bits(PyObject *__pyx_v_self, 
+PyDoc_STRVAR(__pyx_doc_9bitwriter_23BufferedBitWriterNative_4write_chunk, "\n        text: Python str (Unicode)\n        encoding_table: dict mapping character (str) -> Node with\n                        Node.encoding_path_int = (int path, int length)\n        ");
+static PyMethodDef __pyx_mdef_9bitwriter_23BufferedBitWriterNative_5write_chunk = {"write_chunk", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9bitwriter_23BufferedBitWriterNative_5write_chunk, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9bitwriter_23BufferedBitWriterNative_4write_chunk};
+static PyObject *__pyx_pw_9bitwriter_23BufferedBitWriterNative_5write_chunk(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ) {
-  unsigned int __pyx_v_bits;
-  int __pyx_v_length;
+  PyObject *__pyx_v_text = 0;
+  PyObject *__pyx_v_encoding_table = 0;
   #if !CYTHON_METH_FASTCALL
   CYTHON_UNUSED Py_ssize_t __pyx_nargs;
   #endif
@@ -3242,7 +3446,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   int __pyx_clineno = 0;
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("write_bits (wrapper)", 0);
+  __Pyx_RefNannySetupContext("write_chunk (wrapper)", 0);
   #if !CYTHON_METH_FASTCALL
   #if CYTHON_ASSUME_SAFE_SIZE
   __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
@@ -3252,72 +3456,81 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   #endif
   __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
   {
-    PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_bits,&__pyx_mstate_global->__pyx_n_u_length,0};
+    PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_text,&__pyx_mstate_global->__pyx_n_u_encoding_table,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 29, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 39, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  2:
         values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 29, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 39, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 29, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 39, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "write_bits", 0) < 0) __PYX_ERR(0, 29, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "write_chunk", 0) < 0) __PYX_ERR(0, 39, __pyx_L3_error)
       for (Py_ssize_t i = __pyx_nargs; i < 2; i++) {
-        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("write_bits", 1, 2, 2, i); __PYX_ERR(0, 29, __pyx_L3_error) }
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("write_chunk", 1, 2, 2, i); __PYX_ERR(0, 39, __pyx_L3_error) }
       }
     } else if (unlikely(__pyx_nargs != 2)) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 29, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 39, __pyx_L3_error)
       values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 29, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 39, __pyx_L3_error)
     }
-    __pyx_v_bits = __Pyx_PyLong_As_unsigned_int(values[0]); if (unlikely((__pyx_v_bits == (unsigned int)-1) && PyErr_Occurred())) __PYX_ERR(0, 29, __pyx_L3_error)
-    __pyx_v_length = __Pyx_PyLong_As_int(values[1]); if (unlikely((__pyx_v_length == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 29, __pyx_L3_error)
+    __pyx_v_text = values[0];
+    __pyx_v_encoding_table = ((PyObject*)values[1]);
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("write_bits", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 29, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("write_chunk", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 39, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
   for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
     Py_XDECREF(values[__pyx_temp]);
   }
-  __Pyx_AddTraceback("bitwriter.BufferedBitWriterNative.write_bits", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("bitwriter.BufferedBitWriterNative.write_chunk", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_9bitwriter_23BufferedBitWriterNative_4write_bits(((struct __pyx_obj_9bitwriter_BufferedBitWriterNative *)__pyx_v_self), __pyx_v_bits, __pyx_v_length);
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_encoding_table), (&PyDict_Type), 1, "encoding_table", 1))) __PYX_ERR(0, 41, __pyx_L1_error)
+  __pyx_r = __pyx_pf_9bitwriter_23BufferedBitWriterNative_4write_chunk(((struct __pyx_obj_9bitwriter_BufferedBitWriterNative *)__pyx_v_self), __pyx_v_text, __pyx_v_encoding_table);
 
   /* function exit code */
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __pyx_r = NULL;
   for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
     Py_XDECREF(values[__pyx_temp]);
   }
+  goto __pyx_L7_cleaned_up;
+  __pyx_L0:;
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __pyx_L7_cleaned_up:;
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_9bitwriter_23BufferedBitWriterNative_4write_bits(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self, unsigned int __pyx_v_bits, int __pyx_v_length) {
+static PyObject *__pyx_pf_9bitwriter_23BufferedBitWriterNative_4write_chunk(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self, PyObject *__pyx_v_text, PyObject *__pyx_v_encoding_table) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("write_bits", 0);
+  __Pyx_RefNannySetupContext("write_chunk", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_f_9bitwriter_23BufferedBitWriterNative_write_bits(__pyx_v_self, __pyx_v_bits, __pyx_v_length, 1); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 29, __pyx_L1_error)
-  __pyx_t_1 = __Pyx_void_to_None(NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 29, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_9bitwriter_23BufferedBitWriterNative_write_chunk(__pyx_v_self, __pyx_v_text, __pyx_v_encoding_table, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 39, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -3326,7 +3539,7 @@ static PyObject *__pyx_pf_9bitwriter_23BufferedBitWriterNative_4write_bits(struc
   /* function exit code */
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("bitwriter.BufferedBitWriterNative.write_bits", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("bitwriter.BufferedBitWriterNative.write_chunk", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -3334,10 +3547,10 @@ static PyObject *__pyx_pf_9bitwriter_23BufferedBitWriterNative_4write_bits(struc
   return __pyx_r;
 }
 
-/* "bitwriter.pyx":34
- *             self.write_bit((bits >> i) & 1)
+/* "bitwriter.pyx":63
+ *                 self.write_bit(bit_val)
  * 
- *     cpdef void flush_bytes(self):             # <<<<<<<<<<<<<<
+ *     cpdef flush_bytes(self):             # <<<<<<<<<<<<<<
  *         if self.byte_buffer:
  *             self.stream.write(self.byte_buffer)
 */
@@ -3349,7 +3562,8 @@ PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static void __pyx_f_9bitwriter_23BufferedBitWriterNative_flush_bytes(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self, int __pyx_skip_dispatch) {
+static PyObject *__pyx_f_9bitwriter_23BufferedBitWriterNative_flush_bytes(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self, int __pyx_skip_dispatch) {
+  PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   PyObject *__pyx_t_2 = NULL;
@@ -3377,9 +3591,10 @@ static void __pyx_f_9bitwriter_23BufferedBitWriterNative_flush_bytes(struct __py
     if (unlikely(!__Pyx_object_dict_version_matches(((PyObject *)__pyx_v_self), __pyx_tp_dict_version, __pyx_obj_dict_version))) {
       PY_UINT64_T __pyx_typedict_guard = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
       #endif
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_mstate_global->__pyx_n_u_flush_bytes); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 34, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_mstate_global->__pyx_n_u_flush_bytes); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 63, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       if (!__Pyx_IsSameCFunction(__pyx_t_1, (void(*)(void)) __pyx_pw_9bitwriter_23BufferedBitWriterNative_7flush_bytes)) {
+        __Pyx_XDECREF(__pyx_r);
         __pyx_t_3 = NULL;
         __Pyx_INCREF(__pyx_t_1);
         __pyx_t_4 = __pyx_t_1; 
@@ -3400,10 +3615,11 @@ static void __pyx_f_9bitwriter_23BufferedBitWriterNative_flush_bytes(struct __py
           __pyx_t_2 = __Pyx_PyObject_FastCall(__pyx_t_4, __pyx_callargs+__pyx_t_5, (1-__pyx_t_5) | (__pyx_t_5*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
           __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
           __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-          if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 34, __pyx_L1_error)
+          if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 63, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
         }
-        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+        __pyx_r = __pyx_t_2;
+        __pyx_t_2 = 0;
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
         goto __pyx_L0;
       }
@@ -3420,19 +3636,19 @@ static void __pyx_f_9bitwriter_23BufferedBitWriterNative_flush_bytes(struct __py
     #endif
   }
 
-  /* "bitwriter.pyx":35
+  /* "bitwriter.pyx":64
  * 
- *     cpdef void flush_bytes(self):
+ *     cpdef flush_bytes(self):
  *         if self.byte_buffer:             # <<<<<<<<<<<<<<
  *             self.stream.write(self.byte_buffer)
  *             self.byte_buffer.clear()
 */
   __pyx_t_6 = (__pyx_v_self->byte_buffer != Py_None)&&(__Pyx_PyByteArray_GET_SIZE(__pyx_v_self->byte_buffer) != 0);
-  if (unlikely(((!CYTHON_ASSUME_SAFE_MACROS) && __pyx_t_6 < 0))) __PYX_ERR(0, 35, __pyx_L1_error)
+  if (unlikely(((!CYTHON_ASSUME_SAFE_MACROS) && __pyx_t_6 < 0))) __PYX_ERR(0, 64, __pyx_L1_error)
   if (__pyx_t_6) {
 
-    /* "bitwriter.pyx":36
- *     cpdef void flush_bytes(self):
+    /* "bitwriter.pyx":65
+ *     cpdef flush_bytes(self):
  *         if self.byte_buffer:
  *             self.stream.write(self.byte_buffer)             # <<<<<<<<<<<<<<
  *             self.byte_buffer.clear()
@@ -3445,17 +3661,17 @@ static void __pyx_f_9bitwriter_23BufferedBitWriterNative_flush_bytes(struct __py
       PyObject *__pyx_callargs[2] = {__pyx_t_2, __pyx_v_self->byte_buffer};
       __pyx_t_1 = __Pyx_PyObject_FastCallMethod(__pyx_mstate_global->__pyx_n_u_write, __pyx_callargs+__pyx_t_5, (2-__pyx_t_5) | (1*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
       __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-      if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 36, __pyx_L1_error)
+      if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 65, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
     }
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "bitwriter.pyx":37
+    /* "bitwriter.pyx":66
  *         if self.byte_buffer:
  *             self.stream.write(self.byte_buffer)
  *             self.byte_buffer.clear()             # <<<<<<<<<<<<<<
  * 
- *     cpdef void flush(self):
+ *     cpdef flush(self):
 */
     __pyx_t_2 = __pyx_v_self->byte_buffer;
     __Pyx_INCREF(__pyx_t_2);
@@ -3464,29 +3680,30 @@ static void __pyx_f_9bitwriter_23BufferedBitWriterNative_flush_bytes(struct __py
       PyObject *__pyx_callargs[2] = {__pyx_t_2, NULL};
       __pyx_t_1 = __Pyx_PyObject_FastCallMethod(__pyx_mstate_global->__pyx_n_u_clear, __pyx_callargs+__pyx_t_5, (1-__pyx_t_5) | (1*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
       __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-      if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 37, __pyx_L1_error)
+      if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 66, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
     }
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "bitwriter.pyx":35
+    /* "bitwriter.pyx":64
  * 
- *     cpdef void flush_bytes(self):
+ *     cpdef flush_bytes(self):
  *         if self.byte_buffer:             # <<<<<<<<<<<<<<
  *             self.stream.write(self.byte_buffer)
  *             self.byte_buffer.clear()
 */
   }
 
-  /* "bitwriter.pyx":34
- *             self.write_bit((bits >> i) & 1)
+  /* "bitwriter.pyx":63
+ *                 self.write_bit(bit_val)
  * 
- *     cpdef void flush_bytes(self):             # <<<<<<<<<<<<<<
+ *     cpdef flush_bytes(self):             # <<<<<<<<<<<<<<
  *         if self.byte_buffer:
  *             self.stream.write(self.byte_buffer)
 */
 
   /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
   goto __pyx_L0;
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
@@ -3494,8 +3711,11 @@ static void __pyx_f_9bitwriter_23BufferedBitWriterNative_flush_bytes(struct __py
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
   __Pyx_AddTraceback("bitwriter.BufferedBitWriterNative.flush_bytes", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
   __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
+  return __pyx_r;
 }
 
 /* Python wrapper */
@@ -3549,8 +3769,7 @@ static PyObject *__pyx_pf_9bitwriter_23BufferedBitWriterNative_6flush_bytes(stru
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("flush_bytes", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_f_9bitwriter_23BufferedBitWriterNative_flush_bytes(__pyx_v_self, 1); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 34, __pyx_L1_error)
-  __pyx_t_1 = __Pyx_void_to_None(NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 34, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_9bitwriter_23BufferedBitWriterNative_flush_bytes(__pyx_v_self, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 63, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -3567,12 +3786,12 @@ static PyObject *__pyx_pf_9bitwriter_23BufferedBitWriterNative_6flush_bytes(stru
   return __pyx_r;
 }
 
-/* "bitwriter.pyx":39
+/* "bitwriter.pyx":68
  *             self.byte_buffer.clear()
  * 
- *     cpdef void flush(self):             # <<<<<<<<<<<<<<
+ *     cpdef flush(self):             # <<<<<<<<<<<<<<
  *         if self.bit_pos > 0:
- *             self.bit_buffer <<= (8 - self.bit_pos)
+ *             # pad remaining bits with zeros on the right
 */
 
 static PyObject *__pyx_pw_9bitwriter_23BufferedBitWriterNative_9flush(PyObject *__pyx_v_self, 
@@ -3582,7 +3801,8 @@ PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static void __pyx_f_9bitwriter_23BufferedBitWriterNative_flush(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self, int __pyx_skip_dispatch) {
+static PyObject *__pyx_f_9bitwriter_23BufferedBitWriterNative_flush(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self, int __pyx_skip_dispatch) {
+  PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   PyObject *__pyx_t_2 = NULL;
@@ -3611,9 +3831,10 @@ static void __pyx_f_9bitwriter_23BufferedBitWriterNative_flush(struct __pyx_obj_
     if (unlikely(!__Pyx_object_dict_version_matches(((PyObject *)__pyx_v_self), __pyx_tp_dict_version, __pyx_obj_dict_version))) {
       PY_UINT64_T __pyx_typedict_guard = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
       #endif
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_mstate_global->__pyx_n_u_flush); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 39, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_mstate_global->__pyx_n_u_flush); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 68, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       if (!__Pyx_IsSameCFunction(__pyx_t_1, (void(*)(void)) __pyx_pw_9bitwriter_23BufferedBitWriterNative_9flush)) {
+        __Pyx_XDECREF(__pyx_r);
         __pyx_t_3 = NULL;
         __Pyx_INCREF(__pyx_t_1);
         __pyx_t_4 = __pyx_t_1; 
@@ -3634,10 +3855,11 @@ static void __pyx_f_9bitwriter_23BufferedBitWriterNative_flush(struct __pyx_obj_
           __pyx_t_2 = __Pyx_PyObject_FastCall(__pyx_t_4, __pyx_callargs+__pyx_t_5, (1-__pyx_t_5) | (__pyx_t_5*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
           __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
           __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-          if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 39, __pyx_L1_error)
+          if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 68, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
         }
-        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+        __pyx_r = __pyx_t_2;
+        __pyx_t_2 = 0;
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
         goto __pyx_L0;
       }
@@ -3654,79 +3876,73 @@ static void __pyx_f_9bitwriter_23BufferedBitWriterNative_flush(struct __pyx_obj_
     #endif
   }
 
-  /* "bitwriter.pyx":40
+  /* "bitwriter.pyx":69
  * 
- *     cpdef void flush(self):
+ *     cpdef flush(self):
  *         if self.bit_pos > 0:             # <<<<<<<<<<<<<<
+ *             # pad remaining bits with zeros on the right
  *             self.bit_buffer <<= (8 - self.bit_pos)
- *             self.byte_buffer.append(self.bit_buffer & 0xFF)
 */
   __pyx_t_6 = (__pyx_v_self->bit_pos > 0);
   if (__pyx_t_6) {
 
-    /* "bitwriter.pyx":41
- *     cpdef void flush(self):
+    /* "bitwriter.pyx":71
  *         if self.bit_pos > 0:
+ *             # pad remaining bits with zeros on the right
  *             self.bit_buffer <<= (8 - self.bit_pos)             # <<<<<<<<<<<<<<
- *             self.byte_buffer.append(self.bit_buffer & 0xFF)
- *             self.bit_buffer = 0
+ *             self.byte_buffer.append(self.bit_buffer)
+ *             self.bit_pos = 0
 */
     __pyx_v_self->bit_buffer = (__pyx_v_self->bit_buffer << (8 - __pyx_v_self->bit_pos));
 
-    /* "bitwriter.pyx":42
- *         if self.bit_pos > 0:
+    /* "bitwriter.pyx":72
+ *             # pad remaining bits with zeros on the right
  *             self.bit_buffer <<= (8 - self.bit_pos)
- *             self.byte_buffer.append(self.bit_buffer & 0xFF)             # <<<<<<<<<<<<<<
- *             self.bit_buffer = 0
- *             self.bit_pos = 0
-*/
-    __pyx_t_7 = __Pyx_PyByteArray_Append(__pyx_v_self->byte_buffer, (__pyx_v_self->bit_buffer & 0xFF)); if (unlikely(__pyx_t_7 == ((int)-1))) __PYX_ERR(0, 42, __pyx_L1_error)
-
-    /* "bitwriter.pyx":43
- *             self.bit_buffer <<= (8 - self.bit_pos)
- *             self.byte_buffer.append(self.bit_buffer & 0xFF)
- *             self.bit_buffer = 0             # <<<<<<<<<<<<<<
+ *             self.byte_buffer.append(self.bit_buffer)             # <<<<<<<<<<<<<<
  *             self.bit_pos = 0
  *         self.flush_bytes()
 */
-    __pyx_v_self->bit_buffer = 0;
+    __pyx_t_7 = __Pyx_PyByteArray_Append(__pyx_v_self->byte_buffer, __pyx_v_self->bit_buffer); if (unlikely(__pyx_t_7 == ((int)-1))) __PYX_ERR(0, 72, __pyx_L1_error)
 
-    /* "bitwriter.pyx":44
- *             self.byte_buffer.append(self.bit_buffer & 0xFF)
- *             self.bit_buffer = 0
+    /* "bitwriter.pyx":73
+ *             self.bit_buffer <<= (8 - self.bit_pos)
+ *             self.byte_buffer.append(self.bit_buffer)
  *             self.bit_pos = 0             # <<<<<<<<<<<<<<
  *         self.flush_bytes()
  * 
 */
     __pyx_v_self->bit_pos = 0;
 
-    /* "bitwriter.pyx":40
+    /* "bitwriter.pyx":69
  * 
- *     cpdef void flush(self):
+ *     cpdef flush(self):
  *         if self.bit_pos > 0:             # <<<<<<<<<<<<<<
+ *             # pad remaining bits with zeros on the right
  *             self.bit_buffer <<= (8 - self.bit_pos)
- *             self.byte_buffer.append(self.bit_buffer & 0xFF)
 */
   }
 
-  /* "bitwriter.pyx":45
- *             self.bit_buffer = 0
+  /* "bitwriter.pyx":74
+ *             self.byte_buffer.append(self.bit_buffer)
  *             self.bit_pos = 0
  *         self.flush_bytes()             # <<<<<<<<<<<<<<
  * 
- *     cpdef int bytes_written(self):
+ *     cpdef int bits_written(self):
 */
-  ((struct __pyx_vtabstruct_9bitwriter_BufferedBitWriterNative *)__pyx_v_self->__pyx_vtab)->flush_bytes(__pyx_v_self, 0); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 45, __pyx_L1_error)
+  __pyx_t_1 = ((struct __pyx_vtabstruct_9bitwriter_BufferedBitWriterNative *)__pyx_v_self->__pyx_vtab)->flush_bytes(__pyx_v_self, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 74, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "bitwriter.pyx":39
+  /* "bitwriter.pyx":68
  *             self.byte_buffer.clear()
  * 
- *     cpdef void flush(self):             # <<<<<<<<<<<<<<
+ *     cpdef flush(self):             # <<<<<<<<<<<<<<
  *         if self.bit_pos > 0:
- *             self.bit_buffer <<= (8 - self.bit_pos)
+ *             # pad remaining bits with zeros on the right
 */
 
   /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
   goto __pyx_L0;
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
@@ -3734,8 +3950,11 @@ static void __pyx_f_9bitwriter_23BufferedBitWriterNative_flush(struct __pyx_obj_
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
   __Pyx_AddTraceback("bitwriter.BufferedBitWriterNative.flush", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
   __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
+  return __pyx_r;
 }
 
 /* Python wrapper */
@@ -3789,8 +4008,7 @@ static PyObject *__pyx_pf_9bitwriter_23BufferedBitWriterNative_8flush(struct __p
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("flush", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_f_9bitwriter_23BufferedBitWriterNative_flush(__pyx_v_self, 1); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 39, __pyx_L1_error)
-  __pyx_t_1 = __Pyx_void_to_None(NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 39, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_9bitwriter_23BufferedBitWriterNative_flush(__pyx_v_self, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 68, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -3807,21 +4025,21 @@ static PyObject *__pyx_pf_9bitwriter_23BufferedBitWriterNative_8flush(struct __p
   return __pyx_r;
 }
 
-/* "bitwriter.pyx":47
+/* "bitwriter.pyx":76
  *         self.flush_bytes()
  * 
- *     cpdef int bytes_written(self):             # <<<<<<<<<<<<<<
+ *     cpdef int bits_written(self):             # <<<<<<<<<<<<<<
  *         return len(self.byte_buffer) * 8 + self.bit_pos
 */
 
-static PyObject *__pyx_pw_9bitwriter_23BufferedBitWriterNative_11bytes_written(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_9bitwriter_23BufferedBitWriterNative_11bits_written(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static int __pyx_f_9bitwriter_23BufferedBitWriterNative_bytes_written(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self, int __pyx_skip_dispatch) {
+static int __pyx_f_9bitwriter_23BufferedBitWriterNative_bits_written(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self, int __pyx_skip_dispatch) {
   int __pyx_r;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -3834,7 +4052,7 @@ static int __pyx_f_9bitwriter_23BufferedBitWriterNative_bytes_written(struct __p
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("bytes_written", 0);
+  __Pyx_RefNannySetupContext("bits_written", 0);
   /* Check if called by wrapper */
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overridden in Python */
@@ -3851,9 +4069,9 @@ static int __pyx_f_9bitwriter_23BufferedBitWriterNative_bytes_written(struct __p
     if (unlikely(!__Pyx_object_dict_version_matches(((PyObject *)__pyx_v_self), __pyx_tp_dict_version, __pyx_obj_dict_version))) {
       PY_UINT64_T __pyx_typedict_guard = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
       #endif
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_mstate_global->__pyx_n_u_bytes_written); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 47, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_mstate_global->__pyx_n_u_bits_written); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 76, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
-      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void(*)(void)) __pyx_pw_9bitwriter_23BufferedBitWriterNative_11bytes_written)) {
+      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void(*)(void)) __pyx_pw_9bitwriter_23BufferedBitWriterNative_11bits_written)) {
         __pyx_t_3 = NULL;
         __Pyx_INCREF(__pyx_t_1);
         __pyx_t_4 = __pyx_t_1; 
@@ -3874,10 +4092,10 @@ static int __pyx_f_9bitwriter_23BufferedBitWriterNative_bytes_written(struct __p
           __pyx_t_2 = __Pyx_PyObject_FastCall(__pyx_t_4, __pyx_callargs+__pyx_t_5, (1-__pyx_t_5) | (__pyx_t_5*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
           __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
           __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-          if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 47, __pyx_L1_error)
+          if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 76, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
         }
-        __pyx_t_6 = __Pyx_PyLong_As_int(__pyx_t_2); if (unlikely((__pyx_t_6 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 47, __pyx_L1_error)
+        __pyx_t_6 = __Pyx_PyLong_As_int(__pyx_t_2); if (unlikely((__pyx_t_6 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 76, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
         __pyx_r = __pyx_t_6;
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -3896,26 +4114,26 @@ static int __pyx_f_9bitwriter_23BufferedBitWriterNative_bytes_written(struct __p
     #endif
   }
 
-  /* "bitwriter.pyx":48
+  /* "bitwriter.pyx":77
  * 
- *     cpdef int bytes_written(self):
+ *     cpdef int bits_written(self):
  *         return len(self.byte_buffer) * 8 + self.bit_pos             # <<<<<<<<<<<<<<
 */
   __pyx_t_1 = __pyx_v_self->byte_buffer;
   __Pyx_INCREF(__pyx_t_1);
   if (unlikely(__pyx_t_1 == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-    __PYX_ERR(0, 48, __pyx_L1_error)
+    __PYX_ERR(0, 77, __pyx_L1_error)
   }
-  __pyx_t_7 = __Pyx_PyByteArray_GET_SIZE(__pyx_t_1); if (unlikely(__pyx_t_7 == ((Py_ssize_t)-1))) __PYX_ERR(0, 48, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyByteArray_GET_SIZE(__pyx_t_1); if (unlikely(__pyx_t_7 == ((Py_ssize_t)-1))) __PYX_ERR(0, 77, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_r = ((__pyx_t_7 * 8) + __pyx_v_self->bit_pos);
   goto __pyx_L0;
 
-  /* "bitwriter.pyx":47
+  /* "bitwriter.pyx":76
  *         self.flush_bytes()
  * 
- *     cpdef int bytes_written(self):             # <<<<<<<<<<<<<<
+ *     cpdef int bits_written(self):             # <<<<<<<<<<<<<<
  *         return len(self.byte_buffer) * 8 + self.bit_pos
 */
 
@@ -3925,7 +4143,7 @@ static int __pyx_f_9bitwriter_23BufferedBitWriterNative_bytes_written(struct __p
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_AddTraceback("bitwriter.BufferedBitWriterNative.bytes_written", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("bitwriter.BufferedBitWriterNative.bits_written", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = 0;
   __pyx_L0:;
   __Pyx_RefNannyFinishContext();
@@ -3933,15 +4151,15 @@ static int __pyx_f_9bitwriter_23BufferedBitWriterNative_bytes_written(struct __p
 }
 
 /* Python wrapper */
-static PyObject *__pyx_pw_9bitwriter_23BufferedBitWriterNative_11bytes_written(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_9bitwriter_23BufferedBitWriterNative_11bits_written(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_9bitwriter_23BufferedBitWriterNative_11bytes_written = {"bytes_written", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9bitwriter_23BufferedBitWriterNative_11bytes_written, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_9bitwriter_23BufferedBitWriterNative_11bytes_written(PyObject *__pyx_v_self, 
+static PyMethodDef __pyx_mdef_9bitwriter_23BufferedBitWriterNative_11bits_written = {"bits_written", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9bitwriter_23BufferedBitWriterNative_11bits_written, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_9bitwriter_23BufferedBitWriterNative_11bits_written(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -3954,7 +4172,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("bytes_written (wrapper)", 0);
+  __Pyx_RefNannySetupContext("bits_written (wrapper)", 0);
   #if !CYTHON_METH_FASTCALL
   #if CYTHON_ASSUME_SAFE_SIZE
   __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
@@ -3963,18 +4181,18 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   #endif
   #endif
   __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
-  if (unlikely(__pyx_nargs > 0)) { __Pyx_RaiseArgtupleInvalid("bytes_written", 1, 0, 0, __pyx_nargs); return NULL; }
+  if (unlikely(__pyx_nargs > 0)) { __Pyx_RaiseArgtupleInvalid("bits_written", 1, 0, 0, __pyx_nargs); return NULL; }
   const Py_ssize_t __pyx_kwds_len = unlikely(__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
   if (unlikely(__pyx_kwds_len < 0)) return NULL;
-  if (unlikely(__pyx_kwds_len > 0)) {__Pyx_RejectKeywords("bytes_written", __pyx_kwds); return NULL;}
-  __pyx_r = __pyx_pf_9bitwriter_23BufferedBitWriterNative_10bytes_written(((struct __pyx_obj_9bitwriter_BufferedBitWriterNative *)__pyx_v_self));
+  if (unlikely(__pyx_kwds_len > 0)) {__Pyx_RejectKeywords("bits_written", __pyx_kwds); return NULL;}
+  __pyx_r = __pyx_pf_9bitwriter_23BufferedBitWriterNative_10bits_written(((struct __pyx_obj_9bitwriter_BufferedBitWriterNative *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_9bitwriter_23BufferedBitWriterNative_10bytes_written(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self) {
+static PyObject *__pyx_pf_9bitwriter_23BufferedBitWriterNative_10bits_written(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *__pyx_v_self) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   int __pyx_t_1;
@@ -3982,10 +4200,10 @@ static PyObject *__pyx_pf_9bitwriter_23BufferedBitWriterNative_10bytes_written(s
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("bytes_written", 0);
+  __Pyx_RefNannySetupContext("bits_written", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_9bitwriter_23BufferedBitWriterNative_bytes_written(__pyx_v_self, 1); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 47, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_PyLong_From_int(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 47, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_9bitwriter_23BufferedBitWriterNative_bits_written(__pyx_v_self, 1); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 76, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyLong_From_int(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 76, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_r = __pyx_t_2;
   __pyx_t_2 = 0;
@@ -3994,7 +4212,7 @@ static PyObject *__pyx_pf_9bitwriter_23BufferedBitWriterNative_10bytes_written(s
   /* function exit code */
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_AddTraceback("bitwriter.BufferedBitWriterNative.bytes_written", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("bitwriter.BufferedBitWriterNative.bits_written", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -4442,31 +4660,31 @@ static int __Pyx_modinit_type_init_code(__pyx_mstatetype *__pyx_mstate) {
   __Pyx_RefNannySetupContext("__Pyx_modinit_type_init_code", 0);
   /*--- Type init code ---*/
   __pyx_vtabptr_9bitwriter_BufferedBitWriterNative = &__pyx_vtable_9bitwriter_BufferedBitWriterNative;
-  __pyx_vtable_9bitwriter_BufferedBitWriterNative.write_bit = (void (*)(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *, int, int __pyx_skip_dispatch))__pyx_f_9bitwriter_23BufferedBitWriterNative_write_bit;
-  __pyx_vtable_9bitwriter_BufferedBitWriterNative.write_bits = (void (*)(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *, unsigned int, int, int __pyx_skip_dispatch))__pyx_f_9bitwriter_23BufferedBitWriterNative_write_bits;
-  __pyx_vtable_9bitwriter_BufferedBitWriterNative.flush_bytes = (void (*)(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *, int __pyx_skip_dispatch))__pyx_f_9bitwriter_23BufferedBitWriterNative_flush_bytes;
-  __pyx_vtable_9bitwriter_BufferedBitWriterNative.flush = (void (*)(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *, int __pyx_skip_dispatch))__pyx_f_9bitwriter_23BufferedBitWriterNative_flush;
-  __pyx_vtable_9bitwriter_BufferedBitWriterNative.bytes_written = (int (*)(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *, int __pyx_skip_dispatch))__pyx_f_9bitwriter_23BufferedBitWriterNative_bytes_written;
+  __pyx_vtable_9bitwriter_BufferedBitWriterNative.write_bit = (PyObject *(*)(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *, int, int __pyx_skip_dispatch))__pyx_f_9bitwriter_23BufferedBitWriterNative_write_bit;
+  __pyx_vtable_9bitwriter_BufferedBitWriterNative.write_chunk = (PyObject *(*)(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *, PyObject *, PyObject *, int __pyx_skip_dispatch))__pyx_f_9bitwriter_23BufferedBitWriterNative_write_chunk;
+  __pyx_vtable_9bitwriter_BufferedBitWriterNative.flush_bytes = (PyObject *(*)(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *, int __pyx_skip_dispatch))__pyx_f_9bitwriter_23BufferedBitWriterNative_flush_bytes;
+  __pyx_vtable_9bitwriter_BufferedBitWriterNative.flush = (PyObject *(*)(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *, int __pyx_skip_dispatch))__pyx_f_9bitwriter_23BufferedBitWriterNative_flush;
+  __pyx_vtable_9bitwriter_BufferedBitWriterNative.bits_written = (int (*)(struct __pyx_obj_9bitwriter_BufferedBitWriterNative *, int __pyx_skip_dispatch))__pyx_f_9bitwriter_23BufferedBitWriterNative_bits_written;
   #if CYTHON_USE_TYPE_SPECS
-  __pyx_mstate->__pyx_ptype_9bitwriter_BufferedBitWriterNative = (PyTypeObject *) __Pyx_PyType_FromModuleAndSpec(__pyx_m, &__pyx_type_9bitwriter_BufferedBitWriterNative_spec, NULL); if (unlikely(!__pyx_mstate->__pyx_ptype_9bitwriter_BufferedBitWriterNative)) __PYX_ERR(0, 1, __pyx_L1_error)
-  if (__Pyx_fix_up_extension_type_from_spec(&__pyx_type_9bitwriter_BufferedBitWriterNative_spec, __pyx_mstate->__pyx_ptype_9bitwriter_BufferedBitWriterNative) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
+  __pyx_mstate->__pyx_ptype_9bitwriter_BufferedBitWriterNative = (PyTypeObject *) __Pyx_PyType_FromModuleAndSpec(__pyx_m, &__pyx_type_9bitwriter_BufferedBitWriterNative_spec, NULL); if (unlikely(!__pyx_mstate->__pyx_ptype_9bitwriter_BufferedBitWriterNative)) __PYX_ERR(0, 7, __pyx_L1_error)
+  if (__Pyx_fix_up_extension_type_from_spec(&__pyx_type_9bitwriter_BufferedBitWriterNative_spec, __pyx_mstate->__pyx_ptype_9bitwriter_BufferedBitWriterNative) < 0) __PYX_ERR(0, 7, __pyx_L1_error)
   #else
   __pyx_mstate->__pyx_ptype_9bitwriter_BufferedBitWriterNative = &__pyx_type_9bitwriter_BufferedBitWriterNative;
   #endif
   #if !CYTHON_COMPILING_IN_LIMITED_API
   #endif
   #if !CYTHON_USE_TYPE_SPECS
-  if (__Pyx_PyType_Ready(__pyx_mstate->__pyx_ptype_9bitwriter_BufferedBitWriterNative) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
+  if (__Pyx_PyType_Ready(__pyx_mstate->__pyx_ptype_9bitwriter_BufferedBitWriterNative) < 0) __PYX_ERR(0, 7, __pyx_L1_error)
   #endif
   #if !CYTHON_COMPILING_IN_LIMITED_API
   if ((CYTHON_USE_TYPE_SLOTS && CYTHON_USE_PYTYPE_LOOKUP) && likely(!__pyx_mstate->__pyx_ptype_9bitwriter_BufferedBitWriterNative->tp_dictoffset && __pyx_mstate->__pyx_ptype_9bitwriter_BufferedBitWriterNative->tp_getattro == PyObject_GenericGetAttr)) {
     __pyx_mstate->__pyx_ptype_9bitwriter_BufferedBitWriterNative->tp_getattro = PyObject_GenericGetAttr;
   }
   #endif
-  if (__Pyx_SetVtable(__pyx_mstate->__pyx_ptype_9bitwriter_BufferedBitWriterNative, __pyx_vtabptr_9bitwriter_BufferedBitWriterNative) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
-  if (__Pyx_MergeVtables(__pyx_mstate->__pyx_ptype_9bitwriter_BufferedBitWriterNative) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
-  if (PyObject_SetAttr(__pyx_m, __pyx_mstate_global->__pyx_n_u_BufferedBitWriterNative, (PyObject *) __pyx_mstate->__pyx_ptype_9bitwriter_BufferedBitWriterNative) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
-  if (__Pyx_setup_reduce((PyObject *) __pyx_mstate->__pyx_ptype_9bitwriter_BufferedBitWriterNative) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_mstate->__pyx_ptype_9bitwriter_BufferedBitWriterNative, __pyx_vtabptr_9bitwriter_BufferedBitWriterNative) < 0) __PYX_ERR(0, 7, __pyx_L1_error)
+  if (__Pyx_MergeVtables(__pyx_mstate->__pyx_ptype_9bitwriter_BufferedBitWriterNative) < 0) __PYX_ERR(0, 7, __pyx_L1_error)
+  if (PyObject_SetAttr(__pyx_m, __pyx_mstate_global->__pyx_n_u_BufferedBitWriterNative, (PyObject *) __pyx_mstate->__pyx_ptype_9bitwriter_BufferedBitWriterNative) < 0) __PYX_ERR(0, 7, __pyx_L1_error)
+  if (__Pyx_setup_reduce((PyObject *) __pyx_mstate->__pyx_ptype_9bitwriter_BufferedBitWriterNative) < 0) __PYX_ERR(0, 7, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -4477,10 +4695,30 @@ static int __Pyx_modinit_type_init_code(__pyx_mstatetype *__pyx_mstate) {
 static int __Pyx_modinit_type_import_code(__pyx_mstatetype *__pyx_mstate) {
   __Pyx_RefNannyDeclarations
   CYTHON_UNUSED_VAR(__pyx_mstate);
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__Pyx_modinit_type_import_code", 0);
   /*--- Type import code ---*/
+  __pyx_t_1 = PyImport_ImportModule(__Pyx_BUILTIN_MODULE_NAME); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 9, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_mstate->__pyx_ptype_7cpython_4type_type = __Pyx_ImportType_3_1_2(__pyx_t_1, __Pyx_BUILTIN_MODULE_NAME, "type",
+  #if defined(PYPY_VERSION_NUM) && PYPY_VERSION_NUM < 0x050B0000
+  sizeof(PyTypeObject), __PYX_GET_STRUCT_ALIGNMENT_3_1_2(PyTypeObject),
+  #elif CYTHON_COMPILING_IN_LIMITED_API
+  0, 0,
+  #else
+  sizeof(PyHeapTypeObject), __PYX_GET_STRUCT_ALIGNMENT_3_1_2(PyHeapTypeObject),
+  #endif
+  __Pyx_ImportType_CheckSize_Warn_3_1_2); if (!__pyx_mstate->__pyx_ptype_7cpython_4type_type) __PYX_ERR(2, 9, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_RefNannyFinishContext();
   return 0;
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_RefNannyFinishContext();
+  return -1;
 }
 
 static int __Pyx_modinit_variable_import_code(__pyx_mstatetype *__pyx_mstate) {
@@ -4778,68 +5016,68 @@ __Pyx_RefNannySetupContext("PyInit_bitwriter", 0);
   (void)__Pyx_modinit_variable_export_code(__pyx_mstate);
   (void)__Pyx_modinit_function_export_code(__pyx_mstate);
   if (unlikely((__Pyx_modinit_type_init_code(__pyx_mstate) < 0))) __PYX_ERR(0, 1, __pyx_L1_error)
-  (void)__Pyx_modinit_type_import_code(__pyx_mstate);
+  if (unlikely((__Pyx_modinit_type_import_code(__pyx_mstate) < 0))) __PYX_ERR(0, 1, __pyx_L1_error)
   (void)__Pyx_modinit_variable_import_code(__pyx_mstate);
   (void)__Pyx_modinit_function_import_code(__pyx_mstate);
   /*--- Execution code ---*/
 
-  /* "bitwriter.pyx":19
+  /* "bitwriter.pyx":26
  *         return self.bit_pos
  * 
- *     cpdef void write_bit(self, int bit):             # <<<<<<<<<<<<<<
- *         self.bit_buffer = (self.bit_buffer << 1) | (bit & 1)
- *         self.bit_pos += 1
+ *     @cython.boundscheck(False)             # <<<<<<<<<<<<<<
+ *     @cython.wraparound(False)
+ *     cpdef write_bit(self, int bit):
 */
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9bitwriter_23BufferedBitWriterNative_3write_bit, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_BufferedBitWriterNative_write_bi, NULL, __pyx_mstate_global->__pyx_n_u_bitwriter, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[0])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 19, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9bitwriter_23BufferedBitWriterNative_3write_bit, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_BufferedBitWriterNative_write_bi, NULL, __pyx_mstate_global->__pyx_n_u_bitwriter, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[0])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 26, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_9bitwriter_BufferedBitWriterNative, __pyx_mstate_global->__pyx_n_u_write_bit, __pyx_t_2) < 0) __PYX_ERR(0, 19, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-  /* "bitwriter.pyx":29
- *                 self.flush_bytes()
- * 
- *     cpdef void write_bits(self, unsigned int bits, int length):             # <<<<<<<<<<<<<<
- *         cdef int i
- *         for i in range(length - 1, -1, -1):
-*/
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9bitwriter_23BufferedBitWriterNative_5write_bits, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_BufferedBitWriterNative_write_bi_2, NULL, __pyx_mstate_global->__pyx_n_u_bitwriter, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[1])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 29, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_9bitwriter_BufferedBitWriterNative, __pyx_mstate_global->__pyx_n_u_write_bits, __pyx_t_2) < 0) __PYX_ERR(0, 29, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-  /* "bitwriter.pyx":34
- *             self.write_bit((bits >> i) & 1)
- * 
- *     cpdef void flush_bytes(self):             # <<<<<<<<<<<<<<
- *         if self.byte_buffer:
- *             self.stream.write(self.byte_buffer)
-*/
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9bitwriter_23BufferedBitWriterNative_7flush_bytes, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_BufferedBitWriterNative_flush_by, NULL, __pyx_mstate_global->__pyx_n_u_bitwriter, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[2])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 34, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_9bitwriter_BufferedBitWriterNative, __pyx_mstate_global->__pyx_n_u_flush_bytes, __pyx_t_2) < 0) __PYX_ERR(0, 34, __pyx_L1_error)
+  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_9bitwriter_BufferedBitWriterNative, __pyx_mstate_global->__pyx_n_u_write_bit, __pyx_t_2) < 0) __PYX_ERR(0, 26, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "bitwriter.pyx":39
- *             self.byte_buffer.clear()
+ *                 self.flush_bytes()
  * 
- *     cpdef void flush(self):             # <<<<<<<<<<<<<<
- *         if self.bit_pos > 0:
- *             self.bit_buffer <<= (8 - self.bit_pos)
+ *     @cython.boundscheck(False)             # <<<<<<<<<<<<<<
+ *     @cython.wraparound(False)
+ *     cpdef write_chunk(self, text, dict encoding_table):
 */
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9bitwriter_23BufferedBitWriterNative_9flush, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_BufferedBitWriterNative_flush, NULL, __pyx_mstate_global->__pyx_n_u_bitwriter, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[3])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 39, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9bitwriter_23BufferedBitWriterNative_5write_chunk, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_BufferedBitWriterNative_write_ch, NULL, __pyx_mstate_global->__pyx_n_u_bitwriter, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[1])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 39, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_9bitwriter_BufferedBitWriterNative, __pyx_mstate_global->__pyx_n_u_flush, __pyx_t_2) < 0) __PYX_ERR(0, 39, __pyx_L1_error)
+  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_9bitwriter_BufferedBitWriterNative, __pyx_mstate_global->__pyx_n_u_write_chunk, __pyx_t_2) < 0) __PYX_ERR(0, 39, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "bitwriter.pyx":47
+  /* "bitwriter.pyx":63
+ *                 self.write_bit(bit_val)
+ * 
+ *     cpdef flush_bytes(self):             # <<<<<<<<<<<<<<
+ *         if self.byte_buffer:
+ *             self.stream.write(self.byte_buffer)
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9bitwriter_23BufferedBitWriterNative_7flush_bytes, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_BufferedBitWriterNative_flush_by, NULL, __pyx_mstate_global->__pyx_n_u_bitwriter, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[2])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 63, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_9bitwriter_BufferedBitWriterNative, __pyx_mstate_global->__pyx_n_u_flush_bytes, __pyx_t_2) < 0) __PYX_ERR(0, 63, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "bitwriter.pyx":68
+ *             self.byte_buffer.clear()
+ * 
+ *     cpdef flush(self):             # <<<<<<<<<<<<<<
+ *         if self.bit_pos > 0:
+ *             # pad remaining bits with zeros on the right
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9bitwriter_23BufferedBitWriterNative_9flush, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_BufferedBitWriterNative_flush, NULL, __pyx_mstate_global->__pyx_n_u_bitwriter, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[3])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 68, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_9bitwriter_BufferedBitWriterNative, __pyx_mstate_global->__pyx_n_u_flush, __pyx_t_2) < 0) __PYX_ERR(0, 68, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "bitwriter.pyx":76
  *         self.flush_bytes()
  * 
- *     cpdef int bytes_written(self):             # <<<<<<<<<<<<<<
+ *     cpdef int bits_written(self):             # <<<<<<<<<<<<<<
  *         return len(self.byte_buffer) * 8 + self.bit_pos
 */
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9bitwriter_23BufferedBitWriterNative_11bytes_written, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_BufferedBitWriterNative_bytes_wr, NULL, __pyx_mstate_global->__pyx_n_u_bitwriter, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[4])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 47, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_9bitwriter_23BufferedBitWriterNative_11bits_written, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_BufferedBitWriterNative_bits_wri, NULL, __pyx_mstate_global->__pyx_n_u_bitwriter, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[4])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 76, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_9bitwriter_BufferedBitWriterNative, __pyx_mstate_global->__pyx_n_u_bytes_written, __pyx_t_2) < 0) __PYX_ERR(0, 47, __pyx_L1_error)
+  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_9bitwriter_BufferedBitWriterNative, __pyx_mstate_global->__pyx_n_u_bits_written, __pyx_t_2) < 0) __PYX_ERR(0, 76, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "(tree fragment)":1
@@ -4864,9 +5102,9 @@ __Pyx_RefNannySetupContext("PyInit_bitwriter", 0);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "bitwriter.pyx":1
- * cdef class BufferedBitWriterNative:             # <<<<<<<<<<<<<<
- *     cdef object stream  # Remove type annotation here
- *     cdef bytearray byte_buffer
+ * # bitwriter.pyx             # <<<<<<<<<<<<<<
+ * # cython: language_level=3
+ * from cpython.bytes cimport PyBytes_FromStringAndSize
 */
   __pyx_t_2 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
@@ -4908,11 +5146,11 @@ __Pyx_RefNannySetupContext("PyInit_bitwriter", 0);
 
 typedef struct {
     const char *s;
-#if 50 <= 65535
+#if 179 <= 65535
     const unsigned short n;
-#elif 50 / 2 < INT_MAX
+#elif 179 / 2 < INT_MAX
     const unsigned int n;
-#elif 50 / 2 < LONG_MAX
+#elif 179 / 2 < LONG_MAX
     const unsigned long n;
 #else
     const Py_ssize_t n;
@@ -4935,24 +5173,27 @@ static const __Pyx_StringTabEntry __pyx_string_tab[] = {
   {__pyx_k_BufferedBitWriterNative, sizeof(__pyx_k_BufferedBitWriterNative), 0, 1, 1}, /* PyObject cname: __pyx_n_u_BufferedBitWriterNative */
   {__pyx_k_BufferedBitWriterNative___reduce, sizeof(__pyx_k_BufferedBitWriterNative___reduce), 0, 1, 1}, /* PyObject cname: __pyx_n_u_BufferedBitWriterNative___reduce */
   {__pyx_k_BufferedBitWriterNative___setsta, sizeof(__pyx_k_BufferedBitWriterNative___setsta), 0, 1, 1}, /* PyObject cname: __pyx_n_u_BufferedBitWriterNative___setsta */
-  {__pyx_k_BufferedBitWriterNative_bytes_wr, sizeof(__pyx_k_BufferedBitWriterNative_bytes_wr), 0, 1, 1}, /* PyObject cname: __pyx_n_u_BufferedBitWriterNative_bytes_wr */
+  {__pyx_k_BufferedBitWriterNative_bits_wri, sizeof(__pyx_k_BufferedBitWriterNative_bits_wri), 0, 1, 1}, /* PyObject cname: __pyx_n_u_BufferedBitWriterNative_bits_wri */
   {__pyx_k_BufferedBitWriterNative_flush, sizeof(__pyx_k_BufferedBitWriterNative_flush), 0, 1, 1}, /* PyObject cname: __pyx_n_u_BufferedBitWriterNative_flush */
   {__pyx_k_BufferedBitWriterNative_flush_by, sizeof(__pyx_k_BufferedBitWriterNative_flush_by), 0, 1, 1}, /* PyObject cname: __pyx_n_u_BufferedBitWriterNative_flush_by */
   {__pyx_k_BufferedBitWriterNative_write_bi, sizeof(__pyx_k_BufferedBitWriterNative_write_bi), 0, 1, 1}, /* PyObject cname: __pyx_n_u_BufferedBitWriterNative_write_bi */
-  {__pyx_k_BufferedBitWriterNative_write_bi_2, sizeof(__pyx_k_BufferedBitWriterNative_write_bi_2), 0, 1, 1}, /* PyObject cname: __pyx_n_u_BufferedBitWriterNative_write_bi_2 */
+  {__pyx_k_BufferedBitWriterNative_write_ch, sizeof(__pyx_k_BufferedBitWriterNative_write_ch), 0, 1, 1}, /* PyObject cname: __pyx_n_u_BufferedBitWriterNative_write_ch */
+  {__pyx_k_Note_that_Cython_is_deliberately, sizeof(__pyx_k_Note_that_Cython_is_deliberately), 0, 1, 0}, /* PyObject cname: __pyx_kp_u_Note_that_Cython_is_deliberately */
   {__pyx_k_TypeError, sizeof(__pyx_k_TypeError), 0, 1, 1}, /* PyObject cname: __pyx_n_u_TypeError */
+  {__pyx_k_add_note, sizeof(__pyx_k_add_note), 0, 1, 0}, /* PyObject cname: __pyx_kp_u_add_note */
   {__pyx_k_append, sizeof(__pyx_k_append), 0, 1, 1}, /* PyObject cname: __pyx_n_u_append */
   {__pyx_k_asyncio_coroutines, sizeof(__pyx_k_asyncio_coroutines), 0, 1, 1}, /* PyObject cname: __pyx_n_u_asyncio_coroutines */
   {__pyx_k_bit, sizeof(__pyx_k_bit), 0, 1, 1}, /* PyObject cname: __pyx_n_u_bit */
-  {__pyx_k_bits, sizeof(__pyx_k_bits), 0, 1, 1}, /* PyObject cname: __pyx_n_u_bits */
+  {__pyx_k_bits_written, sizeof(__pyx_k_bits_written), 0, 1, 1}, /* PyObject cname: __pyx_n_u_bits_written */
   {__pyx_k_bitwriter, sizeof(__pyx_k_bitwriter), 0, 1, 1}, /* PyObject cname: __pyx_n_u_bitwriter */
   {__pyx_k_bitwriter_pyx, sizeof(__pyx_k_bitwriter_pyx), 0, 1, 0}, /* PyObject cname: __pyx_kp_u_bitwriter_pyx */
   {__pyx_k_buffer_size, sizeof(__pyx_k_buffer_size), 0, 1, 1}, /* PyObject cname: __pyx_n_u_buffer_size */
-  {__pyx_k_bytes_written, sizeof(__pyx_k_bytes_written), 0, 1, 1}, /* PyObject cname: __pyx_n_u_bytes_written */
   {__pyx_k_clear, sizeof(__pyx_k_clear), 0, 1, 1}, /* PyObject cname: __pyx_n_u_clear */
   {__pyx_k_cline_in_traceback, sizeof(__pyx_k_cline_in_traceback), 0, 1, 1}, /* PyObject cname: __pyx_n_u_cline_in_traceback */
   {__pyx_k_disable, sizeof(__pyx_k_disable), 0, 1, 0}, /* PyObject cname: __pyx_kp_u_disable */
   {__pyx_k_enable, sizeof(__pyx_k_enable), 0, 1, 0}, /* PyObject cname: __pyx_kp_u_enable */
+  {__pyx_k_encoding_path_int, sizeof(__pyx_k_encoding_path_int), 0, 1, 1}, /* PyObject cname: __pyx_n_u_encoding_path_int */
+  {__pyx_k_encoding_table, sizeof(__pyx_k_encoding_table), 0, 1, 1}, /* PyObject cname: __pyx_n_u_encoding_table */
   {__pyx_k_flush, sizeof(__pyx_k_flush), 0, 1, 1}, /* PyObject cname: __pyx_n_u_flush */
   {__pyx_k_flush_bytes, sizeof(__pyx_k_flush_bytes), 0, 1, 1}, /* PyObject cname: __pyx_n_u_flush_bytes */
   {__pyx_k_func, sizeof(__pyx_k_func), 0, 1, 1}, /* PyObject cname: __pyx_n_u_func */
@@ -4960,7 +5201,6 @@ static const __Pyx_StringTabEntry __pyx_string_tab[] = {
   {__pyx_k_getstate, sizeof(__pyx_k_getstate), 0, 1, 1}, /* PyObject cname: __pyx_n_u_getstate */
   {__pyx_k_is_coroutine, sizeof(__pyx_k_is_coroutine), 0, 1, 1}, /* PyObject cname: __pyx_n_u_is_coroutine */
   {__pyx_k_isenabled, sizeof(__pyx_k_isenabled), 0, 1, 0}, /* PyObject cname: __pyx_kp_u_isenabled */
-  {__pyx_k_length, sizeof(__pyx_k_length), 0, 1, 1}, /* PyObject cname: __pyx_n_u_length */
   {__pyx_k_main, sizeof(__pyx_k_main), 0, 1, 1}, /* PyObject cname: __pyx_n_u_main */
   {__pyx_k_module, sizeof(__pyx_k_module), 0, 1, 1}, /* PyObject cname: __pyx_n_u_module */
   {__pyx_k_name, sizeof(__pyx_k_name), 0, 1, 1}, /* PyObject cname: __pyx_n_u_name */
@@ -4980,9 +5220,10 @@ static const __Pyx_StringTabEntry __pyx_string_tab[] = {
   {__pyx_k_stream, sizeof(__pyx_k_stream), 0, 1, 1}, /* PyObject cname: __pyx_n_u_stream */
   {__pyx_k_stringsource, sizeof(__pyx_k_stringsource), 0, 1, 0}, /* PyObject cname: __pyx_kp_u_stringsource */
   {__pyx_k_test, sizeof(__pyx_k_test), 0, 1, 1}, /* PyObject cname: __pyx_n_u_test */
+  {__pyx_k_text, sizeof(__pyx_k_text), 0, 1, 1}, /* PyObject cname: __pyx_n_u_text */
   {__pyx_k_write, sizeof(__pyx_k_write), 0, 1, 1}, /* PyObject cname: __pyx_n_u_write */
   {__pyx_k_write_bit, sizeof(__pyx_k_write_bit), 0, 1, 1}, /* PyObject cname: __pyx_n_u_write_bit */
-  {__pyx_k_write_bits, sizeof(__pyx_k_write_bits), 0, 1, 1}, /* PyObject cname: __pyx_n_u_write_bits */
+  {__pyx_k_write_chunk, sizeof(__pyx_k_write_chunk), 0, 1, 1}, /* PyObject cname: __pyx_n_u_write_chunk */
   {0, 0, 0, 0, 0}
 };
 /* InitStrings.proto */
@@ -4992,7 +5233,7 @@ static int __Pyx_InitStrings(__Pyx_StringTabEntry const *t, PyObject **target, c
 
 static int __Pyx_InitCachedBuiltins(__pyx_mstatetype *__pyx_mstate) {
   CYTHON_UNUSED_VAR(__pyx_mstate);
-  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_mstate->__pyx_n_u_range); if (!__pyx_builtin_range) __PYX_ERR(0, 31, __pyx_L1_error)
+  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_mstate->__pyx_n_u_range); if (!__pyx_builtin_range) __PYX_ERR(0, 52, __pyx_L1_error)
   __pyx_builtin_TypeError = __Pyx_GetBuiltinName(__pyx_mstate->__pyx_n_u_TypeError); if (!__pyx_builtin_TypeError) __PYX_ERR(1, 2, __pyx_L1_error)
   return 0;
   __pyx_L1_error:;
@@ -5026,7 +5267,7 @@ static int __Pyx_InitConstants(__pyx_mstatetype *__pyx_mstate) {
             unsigned int num_kwonly_args : 1;
             unsigned int nlocals : 2;
             unsigned int flags : 10;
-            unsigned int first_line : 6;
+            unsigned int first_line : 7;
             unsigned int line_table_length : 12;
         } __Pyx_PyCode_New_function_description;
 /* NewCodeObj.proto */
@@ -5044,29 +5285,29 @@ static int __Pyx_CreateCodeObjects(__pyx_mstatetype *__pyx_mstate) {
   PyObject* tuple_dedup_map = PyDict_New();
   if (unlikely(!tuple_dedup_map)) return -1;
   {
-    const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 2, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 19, 96};
+    const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 2, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 26, 94};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self, __pyx_mstate->__pyx_n_u_bit};
-    __pyx_mstate_global->__pyx_codeobj_tab[0] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_bitwriter_pyx, __pyx_mstate->__pyx_n_u_write_bit, __pyx_k_A_O4_3c_D_L_4y_1_G1D_Ba_a_1_s_4, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[0])) goto bad;
+    __pyx_mstate_global->__pyx_codeobj_tab[0] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_bitwriter_pyx, __pyx_mstate->__pyx_n_u_write_bit, __pyx_k_A_O4_3c_D_L_4y_1_G1D_a_1_s_4_S_A, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[0])) goto bad;
   }
   {
-    const __Pyx_PyCode_New_function_description descr = {3, 0, 0, 3, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 29, 38};
-    PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self, __pyx_mstate->__pyx_n_u_bits, __pyx_mstate->__pyx_n_u_length};
-    __pyx_mstate_global->__pyx_codeobj_tab[1] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_bitwriter_pyx, __pyx_mstate->__pyx_n_u_write_bits, __pyx_k_A_E_awb_D_E_Cr, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[1])) goto bad;
+    const __Pyx_PyCode_New_function_description descr = {3, 0, 0, 3, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 39, 107};
+    PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self, __pyx_mstate->__pyx_n_u_text, __pyx_mstate->__pyx_n_u_encoding_table};
+    __pyx_mstate_global->__pyx_codeobj_tab[1] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_bitwriter_pyx, __pyx_mstate->__pyx_n_u_write_chunk, __pyx_k_A_s_1_E_aq_Qa_as_9AQ_IQa_U_6_4t1, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[1])) goto bad;
   }
   {
-    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 34, 31};
+    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 63, 31};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self};
     __pyx_mstate_global->__pyx_codeobj_tab[2] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_bitwriter_pyx, __pyx_mstate->__pyx_n_u_flush_bytes, __pyx_k_A_4q_vQd_F, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[2])) goto bad;
   }
   {
-    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 39, 65};
+    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 68, 54};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self};
-    __pyx_mstate_global->__pyx_codeobj_tab[3] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_bitwriter_pyx, __pyx_mstate->__pyx_n_u_flush, __pyx_k_A_4y_2T_G1D_Ba_a_1_L, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[3])) goto bad;
+    __pyx_mstate_global->__pyx_codeobj_tab[3] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_bitwriter_pyx, __pyx_mstate->__pyx_n_u_flush, __pyx_k_A_4y_2T_G1D_1_L, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[3])) goto bad;
   }
   {
-    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 47, 23};
+    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 76, 23};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self};
-    __pyx_mstate_global->__pyx_codeobj_tab[4] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_bitwriter_pyx, __pyx_mstate->__pyx_n_u_bytes_written, __pyx_k_A_s_4_Rr_4q, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[4])) goto bad;
+    __pyx_mstate_global->__pyx_codeobj_tab[4] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_bitwriter_pyx, __pyx_mstate->__pyx_n_u_bits_written, __pyx_k_A_s_4_Rr_4q, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[4])) goto bad;
   }
   {
     const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 1, 9};
@@ -6509,6 +6750,177 @@ static CYTHON_INLINE int __Pyx_PyByteArray_Append(PyObject* bytearray, int value
     return 0;
 }
 
+/* GetItemInt */
+static PyObject *__Pyx_GetItemInt_Generic(PyObject *o, PyObject* j) {
+    PyObject *r;
+    if (unlikely(!j)) return NULL;
+    r = PyObject_GetItem(o, j);
+    Py_DECREF(j);
+    return r;
+}
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_List_Fast(PyObject *o, Py_ssize_t i,
+                                                              CYTHON_NCP_UNUSED int wraparound,
+                                                              CYTHON_NCP_UNUSED int boundscheck) {
+#if CYTHON_ASSUME_SAFE_MACROS && CYTHON_ASSUME_SAFE_SIZE && !CYTHON_AVOID_BORROWED_REFS && !CYTHON_AVOID_THREAD_UNSAFE_BORROWED_REFS
+    Py_ssize_t wrapped_i = i;
+    if (wraparound & unlikely(i < 0)) {
+        wrapped_i += PyList_GET_SIZE(o);
+    }
+    if ((!boundscheck) || likely(__Pyx_is_valid_index(wrapped_i, PyList_GET_SIZE(o)))) {
+        PyObject *r = PyList_GET_ITEM(o, wrapped_i);
+        Py_INCREF(r);
+        return r;
+    }
+    return __Pyx_GetItemInt_Generic(o, PyLong_FromSsize_t(i));
+#else
+    return PySequence_GetItem(o, i);
+#endif
+}
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Tuple_Fast(PyObject *o, Py_ssize_t i,
+                                                              CYTHON_NCP_UNUSED int wraparound,
+                                                              CYTHON_NCP_UNUSED int boundscheck) {
+#if CYTHON_ASSUME_SAFE_MACROS && CYTHON_ASSUME_SAFE_SIZE && !CYTHON_AVOID_BORROWED_REFS
+    Py_ssize_t wrapped_i = i;
+    if (wraparound & unlikely(i < 0)) {
+        wrapped_i += PyTuple_GET_SIZE(o);
+    }
+    if ((!boundscheck) || likely(__Pyx_is_valid_index(wrapped_i, PyTuple_GET_SIZE(o)))) {
+        PyObject *r = PyTuple_GET_ITEM(o, wrapped_i);
+        Py_INCREF(r);
+        return r;
+    }
+    return __Pyx_GetItemInt_Generic(o, PyLong_FromSsize_t(i));
+#else
+    return PySequence_GetItem(o, i);
+#endif
+}
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Fast(PyObject *o, Py_ssize_t i, int is_list,
+                                                     CYTHON_NCP_UNUSED int wraparound,
+                                                     CYTHON_NCP_UNUSED int boundscheck) {
+#if CYTHON_ASSUME_SAFE_MACROS && CYTHON_ASSUME_SAFE_SIZE && !CYTHON_AVOID_BORROWED_REFS && CYTHON_USE_TYPE_SLOTS
+    if (is_list || PyList_CheckExact(o)) {
+        Py_ssize_t n = ((!wraparound) | likely(i >= 0)) ? i : i + PyList_GET_SIZE(o);
+        if ((!boundscheck) || (likely(__Pyx_is_valid_index(n, PyList_GET_SIZE(o))))) {
+            return __Pyx_PyList_GetItemRef(o, n);
+        }
+    }
+    else if (PyTuple_CheckExact(o)) {
+        Py_ssize_t n = ((!wraparound) | likely(i >= 0)) ? i : i + PyTuple_GET_SIZE(o);
+        if ((!boundscheck) || likely(__Pyx_is_valid_index(n, PyTuple_GET_SIZE(o)))) {
+            PyObject *r = PyTuple_GET_ITEM(o, n);
+            Py_INCREF(r);
+            return r;
+        }
+    } else {
+        PyMappingMethods *mm = Py_TYPE(o)->tp_as_mapping;
+        PySequenceMethods *sm = Py_TYPE(o)->tp_as_sequence;
+        if (mm && mm->mp_subscript) {
+            PyObject *r, *key = PyLong_FromSsize_t(i);
+            if (unlikely(!key)) return NULL;
+            r = mm->mp_subscript(o, key);
+            Py_DECREF(key);
+            return r;
+        }
+        if (likely(sm && sm->sq_item)) {
+            if (wraparound && unlikely(i < 0) && likely(sm->sq_length)) {
+                Py_ssize_t l = sm->sq_length(o);
+                if (likely(l >= 0)) {
+                    i += l;
+                } else {
+                    if (!PyErr_ExceptionMatches(PyExc_OverflowError))
+                        return NULL;
+                    PyErr_Clear();
+                }
+            }
+            return sm->sq_item(o, i);
+        }
+    }
+#else
+    if (is_list || !PyMapping_Check(o)) {
+        return PySequence_GetItem(o, i);
+    }
+#endif
+    return __Pyx_GetItemInt_Generic(o, PyLong_FromSsize_t(i));
+}
+
+/* DictGetItem */
+#if !CYTHON_COMPILING_IN_PYPY
+static PyObject *__Pyx_PyDict_GetItem(PyObject *d, PyObject* key) {
+    PyObject *value;
+    if (unlikely(__Pyx_PyDict_GetItemRef(d, key, &value) == 0)) { // no value, no error
+        if (unlikely(PyTuple_Check(key))) {
+            PyObject* args = PyTuple_Pack(1, key);
+            if (likely(args)) {
+                PyErr_SetObject(PyExc_KeyError, args);
+                Py_DECREF(args);
+            }
+        } else {
+            PyErr_SetObject(PyExc_KeyError, key);
+        }
+    }
+    return value;
+}
+#endif
+
+/* RaiseUnexpectedTypeError */
+static int
+__Pyx_RaiseUnexpectedTypeError(const char *expected, PyObject *obj)
+{
+    __Pyx_TypeName obj_type_name = __Pyx_PyType_GetFullyQualifiedName(Py_TYPE(obj));
+    PyErr_Format(PyExc_TypeError, "Expected %s, got " __Pyx_FMT_TYPENAME,
+                 expected, obj_type_name);
+    __Pyx_DECREF_TypeName(obj_type_name);
+    return 0;
+}
+
+/* ArgTypeTest */
+static int __Pyx__ArgTypeTest(PyObject *obj, PyTypeObject *type, const char *name, int exact)
+{
+    __Pyx_TypeName type_name;
+    __Pyx_TypeName obj_type_name;
+    PyObject *extra_info = __pyx_mstate_global->__pyx_empty_unicode;
+    int from_annotation_subclass = 0;
+    if (unlikely(!type)) {
+        PyErr_SetString(PyExc_SystemError, "Missing type object");
+        return 0;
+    }
+    else if (!exact) {
+        if (likely(__Pyx_TypeCheck(obj, type))) return 1;
+    } else if (exact == 2) {
+        if (__Pyx_TypeCheck(obj, type)) {
+            from_annotation_subclass = 1;
+            extra_info = __pyx_mstate_global->__pyx_kp_u_Note_that_Cython_is_deliberately;
+        }
+    }
+    type_name = __Pyx_PyType_GetFullyQualifiedName(type);
+    obj_type_name = __Pyx_PyType_GetFullyQualifiedName(Py_TYPE(obj));
+    PyErr_Format(PyExc_TypeError,
+        "Argument '%.200s' has incorrect type (expected " __Pyx_FMT_TYPENAME
+        ", got " __Pyx_FMT_TYPENAME ")"
+#if __PYX_LIMITED_VERSION_HEX < 0x030C0000
+        "%s%U"
+#endif
+        , name, type_name, obj_type_name
+#if __PYX_LIMITED_VERSION_HEX < 0x030C0000
+        , (from_annotation_subclass ? ". " : ""), extra_info
+#endif
+        );
+#if __PYX_LIMITED_VERSION_HEX >= 0x030C0000
+    if (exact == 2 && from_annotation_subclass) {
+        PyObject *res;
+        PyObject *vargs[2];
+        vargs[0] = PyErr_GetRaisedException();
+        vargs[1] = extra_info;
+        res = PyObject_VectorcallMethod(__pyx_mstate_global->__pyx_kp_u_add_note, vargs, 2, NULL);
+        Py_XDECREF(res);
+        PyErr_SetRaisedException(vargs[0]);
+    }
+#endif
+    __Pyx_DECREF_TypeName(type_name);
+    __Pyx_DECREF_TypeName(obj_type_name);
+    return 0;
+}
+
 /* PyObjectFastCallMethod */
 #if !CYTHON_VECTORCALL || PY_VERSION_HEX < 0x03090000
 static PyObject *__Pyx_PyObject_FastCallMethod(PyObject *name, PyObject *const *args, size_t nargsf) {
@@ -7274,6 +7686,89 @@ __PYX_GOOD:
     Py_XDECREF(setstate_cython);
     return ret;
 }
+
+/* TypeImport */
+#ifndef __PYX_HAVE_RT_ImportType_3_1_2
+#define __PYX_HAVE_RT_ImportType_3_1_2
+static PyTypeObject *__Pyx_ImportType_3_1_2(PyObject *module, const char *module_name, const char *class_name,
+    size_t size, size_t alignment, enum __Pyx_ImportType_CheckSize_3_1_2 check_size)
+{
+    PyObject *result = 0;
+    Py_ssize_t basicsize;
+    Py_ssize_t itemsize;
+#if CYTHON_COMPILING_IN_LIMITED_API
+    PyObject *py_basicsize;
+    PyObject *py_itemsize;
+#endif
+    result = PyObject_GetAttrString(module, class_name);
+    if (!result)
+        goto bad;
+    if (!PyType_Check(result)) {
+        PyErr_Format(PyExc_TypeError,
+            "%.200s.%.200s is not a type object",
+            module_name, class_name);
+        goto bad;
+    }
+#if !CYTHON_COMPILING_IN_LIMITED_API
+    basicsize = ((PyTypeObject *)result)->tp_basicsize;
+    itemsize = ((PyTypeObject *)result)->tp_itemsize;
+#else
+    if (size == 0) {
+        return (PyTypeObject *)result;
+    }
+    py_basicsize = PyObject_GetAttrString(result, "__basicsize__");
+    if (!py_basicsize)
+        goto bad;
+    basicsize = PyLong_AsSsize_t(py_basicsize);
+    Py_DECREF(py_basicsize);
+    py_basicsize = 0;
+    if (basicsize == (Py_ssize_t)-1 && PyErr_Occurred())
+        goto bad;
+    py_itemsize = PyObject_GetAttrString(result, "__itemsize__");
+    if (!py_itemsize)
+        goto bad;
+    itemsize = PyLong_AsSsize_t(py_itemsize);
+    Py_DECREF(py_itemsize);
+    py_itemsize = 0;
+    if (itemsize == (Py_ssize_t)-1 && PyErr_Occurred())
+        goto bad;
+#endif
+    if (itemsize) {
+        if (size % alignment) {
+            alignment = size % alignment;
+        }
+        if (itemsize < (Py_ssize_t)alignment)
+            itemsize = (Py_ssize_t)alignment;
+    }
+    if ((size_t)(basicsize + itemsize) < size) {
+        PyErr_Format(PyExc_ValueError,
+            "%.200s.%.200s size changed, may indicate binary incompatibility. "
+            "Expected %zd from C header, got %zd from PyObject",
+            module_name, class_name, size, basicsize+itemsize);
+        goto bad;
+    }
+    if (check_size == __Pyx_ImportType_CheckSize_Error_3_1_2 &&
+            ((size_t)basicsize > size || (size_t)(basicsize + itemsize) < size)) {
+        PyErr_Format(PyExc_ValueError,
+            "%.200s.%.200s size changed, may indicate binary incompatibility. "
+            "Expected %zd from C header, got %zd-%zd from PyObject",
+            module_name, class_name, size, basicsize, basicsize+itemsize);
+        goto bad;
+    }
+    else if (check_size == __Pyx_ImportType_CheckSize_Warn_3_1_2 && (size_t)basicsize > size) {
+        if (PyErr_WarnFormat(NULL, 0,
+                "%.200s.%.200s size changed, may indicate binary incompatibility. "
+                "Expected %zd from C header, got %zd from PyObject",
+                module_name, class_name, size, basicsize) < 0) {
+            goto bad;
+        }
+    }
+    return (PyTypeObject *)result;
+bad:
+    Py_XDECREF(result);
+    return NULL;
+}
+#endif
 
 /* FetchSharedCythonModule */
 static PyObject *__Pyx_FetchSharedCythonABIModule(void) {
@@ -9154,260 +9649,6 @@ raise_neg_overflow:
     return (int) -1;
 }
 
-/* CIntFromPy */
-static CYTHON_INLINE unsigned int __Pyx_PyLong_As_unsigned_int(PyObject *x) {
-#ifdef __Pyx_HAS_GCC_DIAGNOSTIC
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
-#endif
-    const unsigned int neg_one = (unsigned int) -1, const_zero = (unsigned int) 0;
-#ifdef __Pyx_HAS_GCC_DIAGNOSTIC
-#pragma GCC diagnostic pop
-#endif
-    const int is_unsigned = neg_one > const_zero;
-    if (unlikely(!PyLong_Check(x))) {
-        unsigned int val;
-        PyObject *tmp = __Pyx_PyNumber_Long(x);
-        if (!tmp) return (unsigned int) -1;
-        val = __Pyx_PyLong_As_unsigned_int(tmp);
-        Py_DECREF(tmp);
-        return val;
-    }
-    if (is_unsigned) {
-#if CYTHON_USE_PYLONG_INTERNALS
-        if (unlikely(__Pyx_PyLong_IsNeg(x))) {
-            goto raise_neg_overflow;
-        } else if (__Pyx_PyLong_IsCompact(x)) {
-            __PYX_VERIFY_RETURN_INT(unsigned int, __Pyx_compact_upylong, __Pyx_PyLong_CompactValueUnsigned(x))
-        } else {
-            const digit* digits = __Pyx_PyLong_Digits(x);
-            assert(__Pyx_PyLong_DigitCount(x) > 1);
-            switch (__Pyx_PyLong_DigitCount(x)) {
-                case 2:
-                    if ((8 * sizeof(unsigned int) > 1 * PyLong_SHIFT)) {
-                        if ((8 * sizeof(unsigned long) > 2 * PyLong_SHIFT)) {
-                            __PYX_VERIFY_RETURN_INT(unsigned int, unsigned long, (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if ((8 * sizeof(unsigned int) >= 2 * PyLong_SHIFT)) {
-                            return (unsigned int) (((((unsigned int)digits[1]) << PyLong_SHIFT) | (unsigned int)digits[0]));
-                        }
-                    }
-                    break;
-                case 3:
-                    if ((8 * sizeof(unsigned int) > 2 * PyLong_SHIFT)) {
-                        if ((8 * sizeof(unsigned long) > 3 * PyLong_SHIFT)) {
-                            __PYX_VERIFY_RETURN_INT(unsigned int, unsigned long, (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if ((8 * sizeof(unsigned int) >= 3 * PyLong_SHIFT)) {
-                            return (unsigned int) (((((((unsigned int)digits[2]) << PyLong_SHIFT) | (unsigned int)digits[1]) << PyLong_SHIFT) | (unsigned int)digits[0]));
-                        }
-                    }
-                    break;
-                case 4:
-                    if ((8 * sizeof(unsigned int) > 3 * PyLong_SHIFT)) {
-                        if ((8 * sizeof(unsigned long) > 4 * PyLong_SHIFT)) {
-                            __PYX_VERIFY_RETURN_INT(unsigned int, unsigned long, (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if ((8 * sizeof(unsigned int) >= 4 * PyLong_SHIFT)) {
-                            return (unsigned int) (((((((((unsigned int)digits[3]) << PyLong_SHIFT) | (unsigned int)digits[2]) << PyLong_SHIFT) | (unsigned int)digits[1]) << PyLong_SHIFT) | (unsigned int)digits[0]));
-                        }
-                    }
-                    break;
-            }
-        }
-#endif
-#if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX < 0x030C00A7
-        if (unlikely(Py_SIZE(x) < 0)) {
-            goto raise_neg_overflow;
-        }
-#else
-        {
-            int result = PyObject_RichCompareBool(x, Py_False, Py_LT);
-            if (unlikely(result < 0))
-                return (unsigned int) -1;
-            if (unlikely(result == 1))
-                goto raise_neg_overflow;
-        }
-#endif
-        if ((sizeof(unsigned int) <= sizeof(unsigned long))) {
-            __PYX_VERIFY_RETURN_INT_EXC(unsigned int, unsigned long, PyLong_AsUnsignedLong(x))
-#ifdef HAVE_LONG_LONG
-        } else if ((sizeof(unsigned int) <= sizeof(unsigned PY_LONG_LONG))) {
-            __PYX_VERIFY_RETURN_INT_EXC(unsigned int, unsigned PY_LONG_LONG, PyLong_AsUnsignedLongLong(x))
-#endif
-        }
-    } else {
-#if CYTHON_USE_PYLONG_INTERNALS
-        if (__Pyx_PyLong_IsCompact(x)) {
-            __PYX_VERIFY_RETURN_INT(unsigned int, __Pyx_compact_pylong, __Pyx_PyLong_CompactValue(x))
-        } else {
-            const digit* digits = __Pyx_PyLong_Digits(x);
-            assert(__Pyx_PyLong_DigitCount(x) > 1);
-            switch (__Pyx_PyLong_SignedDigitCount(x)) {
-                case -2:
-                    if ((8 * sizeof(unsigned int) - 1 > 1 * PyLong_SHIFT)) {
-                        if ((8 * sizeof(unsigned long) > 2 * PyLong_SHIFT)) {
-                            __PYX_VERIFY_RETURN_INT(unsigned int, long, -(long) (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if ((8 * sizeof(unsigned int) - 1 > 2 * PyLong_SHIFT)) {
-                            return (unsigned int) (((unsigned int)-1)*(((((unsigned int)digits[1]) << PyLong_SHIFT) | (unsigned int)digits[0])));
-                        }
-                    }
-                    break;
-                case 2:
-                    if ((8 * sizeof(unsigned int) > 1 * PyLong_SHIFT)) {
-                        if ((8 * sizeof(unsigned long) > 2 * PyLong_SHIFT)) {
-                            __PYX_VERIFY_RETURN_INT(unsigned int, unsigned long, (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if ((8 * sizeof(unsigned int) - 1 > 2 * PyLong_SHIFT)) {
-                            return (unsigned int) ((((((unsigned int)digits[1]) << PyLong_SHIFT) | (unsigned int)digits[0])));
-                        }
-                    }
-                    break;
-                case -3:
-                    if ((8 * sizeof(unsigned int) - 1 > 2 * PyLong_SHIFT)) {
-                        if ((8 * sizeof(unsigned long) > 3 * PyLong_SHIFT)) {
-                            __PYX_VERIFY_RETURN_INT(unsigned int, long, -(long) (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if ((8 * sizeof(unsigned int) - 1 > 3 * PyLong_SHIFT)) {
-                            return (unsigned int) (((unsigned int)-1)*(((((((unsigned int)digits[2]) << PyLong_SHIFT) | (unsigned int)digits[1]) << PyLong_SHIFT) | (unsigned int)digits[0])));
-                        }
-                    }
-                    break;
-                case 3:
-                    if ((8 * sizeof(unsigned int) > 2 * PyLong_SHIFT)) {
-                        if ((8 * sizeof(unsigned long) > 3 * PyLong_SHIFT)) {
-                            __PYX_VERIFY_RETURN_INT(unsigned int, unsigned long, (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if ((8 * sizeof(unsigned int) - 1 > 3 * PyLong_SHIFT)) {
-                            return (unsigned int) ((((((((unsigned int)digits[2]) << PyLong_SHIFT) | (unsigned int)digits[1]) << PyLong_SHIFT) | (unsigned int)digits[0])));
-                        }
-                    }
-                    break;
-                case -4:
-                    if ((8 * sizeof(unsigned int) - 1 > 3 * PyLong_SHIFT)) {
-                        if ((8 * sizeof(unsigned long) > 4 * PyLong_SHIFT)) {
-                            __PYX_VERIFY_RETURN_INT(unsigned int, long, -(long) (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if ((8 * sizeof(unsigned int) - 1 > 4 * PyLong_SHIFT)) {
-                            return (unsigned int) (((unsigned int)-1)*(((((((((unsigned int)digits[3]) << PyLong_SHIFT) | (unsigned int)digits[2]) << PyLong_SHIFT) | (unsigned int)digits[1]) << PyLong_SHIFT) | (unsigned int)digits[0])));
-                        }
-                    }
-                    break;
-                case 4:
-                    if ((8 * sizeof(unsigned int) > 3 * PyLong_SHIFT)) {
-                        if ((8 * sizeof(unsigned long) > 4 * PyLong_SHIFT)) {
-                            __PYX_VERIFY_RETURN_INT(unsigned int, unsigned long, (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
-                        } else if ((8 * sizeof(unsigned int) - 1 > 4 * PyLong_SHIFT)) {
-                            return (unsigned int) ((((((((((unsigned int)digits[3]) << PyLong_SHIFT) | (unsigned int)digits[2]) << PyLong_SHIFT) | (unsigned int)digits[1]) << PyLong_SHIFT) | (unsigned int)digits[0])));
-                        }
-                    }
-                    break;
-            }
-        }
-#endif
-        if ((sizeof(unsigned int) <= sizeof(long))) {
-            __PYX_VERIFY_RETURN_INT_EXC(unsigned int, long, PyLong_AsLong(x))
-#ifdef HAVE_LONG_LONG
-        } else if ((sizeof(unsigned int) <= sizeof(PY_LONG_LONG))) {
-            __PYX_VERIFY_RETURN_INT_EXC(unsigned int, PY_LONG_LONG, PyLong_AsLongLong(x))
-#endif
-        }
-    }
-    {
-        unsigned int val;
-        int ret = -1;
-#if PY_VERSION_HEX >= 0x030d00A6 && !CYTHON_COMPILING_IN_LIMITED_API
-        Py_ssize_t bytes_copied = PyLong_AsNativeBytes(
-            x, &val, sizeof(val), Py_ASNATIVEBYTES_NATIVE_ENDIAN | (is_unsigned ? Py_ASNATIVEBYTES_UNSIGNED_BUFFER | Py_ASNATIVEBYTES_REJECT_NEGATIVE : 0));
-        if (unlikely(bytes_copied == -1)) {
-        } else if (unlikely(bytes_copied > (Py_ssize_t) sizeof(val))) {
-            goto raise_overflow;
-        } else {
-            ret = 0;
-        }
-#elif PY_VERSION_HEX < 0x030d0000 && !(CYTHON_COMPILING_IN_PYPY || CYTHON_COMPILING_IN_LIMITED_API) || defined(_PyLong_AsByteArray)
-        int one = 1; int is_little = (int)*(unsigned char *)&one;
-        unsigned char *bytes = (unsigned char *)&val;
-        ret = _PyLong_AsByteArray((PyLongObject *)x,
-                                    bytes, sizeof(val),
-                                    is_little, !is_unsigned);
-#else
-        PyObject *v;
-        PyObject *stepval = NULL, *mask = NULL, *shift = NULL;
-        int bits, remaining_bits, is_negative = 0;
-        int chunk_size = (sizeof(long) < 8) ? 30 : 62;
-        if (likely(PyLong_CheckExact(x))) {
-            v = __Pyx_NewRef(x);
-        } else {
-            v = PyNumber_Long(x);
-            if (unlikely(!v)) return (unsigned int) -1;
-            assert(PyLong_CheckExact(v));
-        }
-        {
-            int result = PyObject_RichCompareBool(v, Py_False, Py_LT);
-            if (unlikely(result < 0)) {
-                Py_DECREF(v);
-                return (unsigned int) -1;
-            }
-            is_negative = result == 1;
-        }
-        if (is_unsigned && unlikely(is_negative)) {
-            Py_DECREF(v);
-            goto raise_neg_overflow;
-        } else if (is_negative) {
-            stepval = PyNumber_Invert(v);
-            Py_DECREF(v);
-            if (unlikely(!stepval))
-                return (unsigned int) -1;
-        } else {
-            stepval = v;
-        }
-        v = NULL;
-        val = (unsigned int) 0;
-        mask = PyLong_FromLong((1L << chunk_size) - 1); if (unlikely(!mask)) goto done;
-        shift = PyLong_FromLong(chunk_size); if (unlikely(!shift)) goto done;
-        for (bits = 0; bits < (int) sizeof(unsigned int) * 8 - chunk_size; bits += chunk_size) {
-            PyObject *tmp, *digit;
-            long idigit;
-            digit = PyNumber_And(stepval, mask);
-            if (unlikely(!digit)) goto done;
-            idigit = PyLong_AsLong(digit);
-            Py_DECREF(digit);
-            if (unlikely(idigit < 0)) goto done;
-            val |= ((unsigned int) idigit) << bits;
-            tmp = PyNumber_Rshift(stepval, shift);
-            if (unlikely(!tmp)) goto done;
-            Py_DECREF(stepval); stepval = tmp;
-        }
-        Py_DECREF(shift); shift = NULL;
-        Py_DECREF(mask); mask = NULL;
-        {
-            long idigit = PyLong_AsLong(stepval);
-            if (unlikely(idigit < 0)) goto done;
-            remaining_bits = ((int) sizeof(unsigned int) * 8) - bits - (is_unsigned ? 0 : 1);
-            if (unlikely(idigit >= (1L << remaining_bits)))
-                goto raise_overflow;
-            val |= ((unsigned int) idigit) << bits;
-        }
-        if (!is_unsigned) {
-            if (unlikely(val & (((unsigned int) 1) << (sizeof(unsigned int) * 8 - 1))))
-                goto raise_overflow;
-            if (is_negative)
-                val = ~val;
-        }
-        ret = 0;
-    done:
-        Py_XDECREF(shift);
-        Py_XDECREF(mask);
-        Py_XDECREF(stepval);
-#endif
-        if (unlikely(ret))
-            return (unsigned int) -1;
-        return val;
-    }
-raise_overflow:
-    PyErr_SetString(PyExc_OverflowError,
-        "value too large to convert to unsigned int");
-    return (unsigned int) -1;
-raise_neg_overflow:
-    PyErr_SetString(PyExc_OverflowError,
-        "can't convert negative value to unsigned int");
-    return (unsigned int) -1;
-}
-
 /* PyObjectVectorCallKwBuilder */
 #if CYTHON_VECTORCALL
 static int __Pyx_VectorcallBuilder_AddArg(PyObject *key, PyObject *value, PyObject *builder, PyObject **args, int n) {
@@ -9512,6 +9753,77 @@ static CYTHON_INLINE PyObject* __Pyx_PyLong_From_int(int value) {
 }
 
 /* CIntToPy */
+static CYTHON_INLINE PyObject* __Pyx_PyLong_From_uint8_t(uint8_t value) {
+#ifdef __Pyx_HAS_GCC_DIAGNOSTIC
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+#endif
+    const uint8_t neg_one = (uint8_t) -1, const_zero = (uint8_t) 0;
+#ifdef __Pyx_HAS_GCC_DIAGNOSTIC
+#pragma GCC diagnostic pop
+#endif
+    const int is_unsigned = neg_one > const_zero;
+    if (is_unsigned) {
+        if (sizeof(uint8_t) < sizeof(long)) {
+            return PyLong_FromLong((long) value);
+        } else if (sizeof(uint8_t) <= sizeof(unsigned long)) {
+            return PyLong_FromUnsignedLong((unsigned long) value);
+#if defined(HAVE_LONG_LONG) && !CYTHON_COMPILING_IN_PYPY
+        } else if (sizeof(uint8_t) <= sizeof(unsigned PY_LONG_LONG)) {
+            return PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG) value);
+#endif
+        }
+    } else {
+        if (sizeof(uint8_t) <= sizeof(long)) {
+            return PyLong_FromLong((long) value);
+#ifdef HAVE_LONG_LONG
+        } else if (sizeof(uint8_t) <= sizeof(PY_LONG_LONG)) {
+            return PyLong_FromLongLong((PY_LONG_LONG) value);
+#endif
+        }
+    }
+    {
+        unsigned char *bytes = (unsigned char *)&value;
+#if !CYTHON_COMPILING_IN_LIMITED_API && PY_VERSION_HEX >= 0x030d00A4
+        if (is_unsigned) {
+            return PyLong_FromUnsignedNativeBytes(bytes, sizeof(value), -1);
+        } else {
+            return PyLong_FromNativeBytes(bytes, sizeof(value), -1);
+        }
+#elif !CYTHON_COMPILING_IN_LIMITED_API && PY_VERSION_HEX < 0x030d0000
+        int one = 1; int little = (int)*(unsigned char *)&one;
+        return _PyLong_FromByteArray(bytes, sizeof(uint8_t),
+                                     little, !is_unsigned);
+#else
+        int one = 1; int little = (int)*(unsigned char *)&one;
+        PyObject *from_bytes, *result = NULL, *kwds = NULL;
+        PyObject *py_bytes = NULL, *order_str = NULL;
+        from_bytes = PyObject_GetAttrString((PyObject*)&PyLong_Type, "from_bytes");
+        if (!from_bytes) return NULL;
+        py_bytes = PyBytes_FromStringAndSize((char*)bytes, sizeof(uint8_t));
+        if (!py_bytes) goto limited_bad;
+        order_str = PyUnicode_FromString(little ? "little" : "big");
+        if (!order_str) goto limited_bad;
+        {
+            PyObject *args[3+(CYTHON_VECTORCALL ? 1 : 0)] = { NULL, py_bytes, order_str };
+            if (!is_unsigned) {
+                kwds = __Pyx_MakeVectorcallBuilderKwds(1);
+                if (!kwds) goto limited_bad;
+                if (__Pyx_VectorcallBuilder_AddArgStr("signed", __Pyx_NewRef(Py_True), kwds, args+3, 0) < 0) goto limited_bad;
+            }
+            result = __Pyx_Object_Vectorcall_CallFromBuilder(from_bytes, args+1, 2 | __Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET, kwds);
+        }
+        limited_bad:
+        Py_XDECREF(kwds);
+        Py_XDECREF(order_str);
+        Py_XDECREF(py_bytes);
+        Py_XDECREF(from_bytes);
+        return result;
+#endif
+    }
+}
+
+/* CIntToPy */
 static CYTHON_INLINE PyObject* __Pyx_PyLong_From_long(long value) {
 #ifdef __Pyx_HAS_GCC_DIAGNOSTIC
 #pragma GCC diagnostic push
@@ -9560,77 +9872,6 @@ static CYTHON_INLINE PyObject* __Pyx_PyLong_From_long(long value) {
         from_bytes = PyObject_GetAttrString((PyObject*)&PyLong_Type, "from_bytes");
         if (!from_bytes) return NULL;
         py_bytes = PyBytes_FromStringAndSize((char*)bytes, sizeof(long));
-        if (!py_bytes) goto limited_bad;
-        order_str = PyUnicode_FromString(little ? "little" : "big");
-        if (!order_str) goto limited_bad;
-        {
-            PyObject *args[3+(CYTHON_VECTORCALL ? 1 : 0)] = { NULL, py_bytes, order_str };
-            if (!is_unsigned) {
-                kwds = __Pyx_MakeVectorcallBuilderKwds(1);
-                if (!kwds) goto limited_bad;
-                if (__Pyx_VectorcallBuilder_AddArgStr("signed", __Pyx_NewRef(Py_True), kwds, args+3, 0) < 0) goto limited_bad;
-            }
-            result = __Pyx_Object_Vectorcall_CallFromBuilder(from_bytes, args+1, 2 | __Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET, kwds);
-        }
-        limited_bad:
-        Py_XDECREF(kwds);
-        Py_XDECREF(order_str);
-        Py_XDECREF(py_bytes);
-        Py_XDECREF(from_bytes);
-        return result;
-#endif
-    }
-}
-
-/* CIntToPy */
-static CYTHON_INLINE PyObject* __Pyx_PyLong_From_unsigned_int(unsigned int value) {
-#ifdef __Pyx_HAS_GCC_DIAGNOSTIC
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
-#endif
-    const unsigned int neg_one = (unsigned int) -1, const_zero = (unsigned int) 0;
-#ifdef __Pyx_HAS_GCC_DIAGNOSTIC
-#pragma GCC diagnostic pop
-#endif
-    const int is_unsigned = neg_one > const_zero;
-    if (is_unsigned) {
-        if (sizeof(unsigned int) < sizeof(long)) {
-            return PyLong_FromLong((long) value);
-        } else if (sizeof(unsigned int) <= sizeof(unsigned long)) {
-            return PyLong_FromUnsignedLong((unsigned long) value);
-#if defined(HAVE_LONG_LONG) && !CYTHON_COMPILING_IN_PYPY
-        } else if (sizeof(unsigned int) <= sizeof(unsigned PY_LONG_LONG)) {
-            return PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG) value);
-#endif
-        }
-    } else {
-        if (sizeof(unsigned int) <= sizeof(long)) {
-            return PyLong_FromLong((long) value);
-#ifdef HAVE_LONG_LONG
-        } else if (sizeof(unsigned int) <= sizeof(PY_LONG_LONG)) {
-            return PyLong_FromLongLong((PY_LONG_LONG) value);
-#endif
-        }
-    }
-    {
-        unsigned char *bytes = (unsigned char *)&value;
-#if !CYTHON_COMPILING_IN_LIMITED_API && PY_VERSION_HEX >= 0x030d00A4
-        if (is_unsigned) {
-            return PyLong_FromUnsignedNativeBytes(bytes, sizeof(value), -1);
-        } else {
-            return PyLong_FromNativeBytes(bytes, sizeof(value), -1);
-        }
-#elif !CYTHON_COMPILING_IN_LIMITED_API && PY_VERSION_HEX < 0x030d0000
-        int one = 1; int little = (int)*(unsigned char *)&one;
-        return _PyLong_FromByteArray(bytes, sizeof(unsigned int),
-                                     little, !is_unsigned);
-#else
-        int one = 1; int little = (int)*(unsigned char *)&one;
-        PyObject *from_bytes, *result = NULL, *kwds = NULL;
-        PyObject *py_bytes = NULL, *order_str = NULL;
-        from_bytes = PyObject_GetAttrString((PyObject*)&PyLong_Type, "from_bytes");
-        if (!from_bytes) return NULL;
-        py_bytes = PyBytes_FromStringAndSize((char*)bytes, sizeof(unsigned int));
         if (!py_bytes) goto limited_bad;
         order_str = PyUnicode_FromString(little ? "little" : "big");
         if (!order_str) goto limited_bad;
