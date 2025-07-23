@@ -31,7 +31,7 @@ class Node:
 class BitBuffer:
     write_bit_buffer: int = 0
     write_bit_position: int = 0
-    def write_bit(self, stream: io.BufferedWriter, value: int):
+    def write_int1(self, stream: io.BufferedWriter, value: int):
         assert value == 0 or value == 1
         mask = value << (8 - self.write_bit_position - 1)
         self.write_bit_buffer |= mask
@@ -40,7 +40,7 @@ class BitBuffer:
             write_int8(stream, self.write_bit_buffer)
             self.write_bit_buffer = 0
             self.write_bit_position = 0
-    def flush_bit_buffer(self, stream: io.BufferedWriter):
+    def flush(self, stream: io.BufferedWriter):
         if self.write_bit_position != 0:
             write_int8(stream, self.write_bit_buffer)
 
@@ -114,14 +114,13 @@ class HuffmanEncoder:
             bit = current.children.index(previous)
             path.append(bit)
         while path:
-            self.bit_buffer.write_bit(self.stream, path.pop())
+            self.bit_buffer.write_int1(self.stream, path.pop())
     def close(self):
-        self.bit_buffer.flush_bit_buffer(self.stream)
+        self.bit_buffer.flush(self.stream)
         total_bytes_written = self.stream.tell() - self.encoded_message_used_bits_position - 1
         self.stream.seek(self.encoded_message_size_position)
         write_int32(self.stream, total_bytes_written)
         self.stream.seek(self.encoded_message_used_bits_position)
-        global write_bit_position
         write_int8(self.stream, self.bit_buffer.write_bit_position)
         self.stream.seek(0)
 
