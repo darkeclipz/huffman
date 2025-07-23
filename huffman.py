@@ -6,6 +6,7 @@ import pathlib
 from collections import Counter
 import argparse
 from tqdm import tqdm
+import heapq
 
 FILE_FORMAT_CONSTANT = 0x5A4846
 FILE_FORMAT_VERSION = 2
@@ -29,6 +30,8 @@ class Node:
         return Node(Node._id_counter, None, None, weight, [left, right], [])
     def __eq__(self, other):
         return isinstance(other, Node) and self.id == other.id
+    def __lt__(self, other):
+        return self.weight < other.weight
 
 class BitBuffer:
     write_bit_buffer: int = 0
@@ -85,21 +88,20 @@ class HuffmanTree:
 
     @staticmethod
     def new(frequency_list: List[tuple[str, int]]):
-        nodes = []
         encoding_table: dict[str, Node] = {}
+        heap: List[Node] = []
         for character, occurance in frequency_list:
             node = Node.new_leaf(character, occurance)
-            nodes.append(node)
+            heapq.heappush(heap, node)
             encoding_table[character] = node
-        while len(nodes) >= 2:
-            last_node = pop_min_node(nodes)
-            second_last_node = pop_min_node(nodes)
-            merged_weight = last_node.weight + second_last_node.weight
-            merged_node = Node.new_node(merged_weight, left=second_last_node, right=last_node)
-            last_node.parent = merged_node
-            second_last_node.parent = merged_node
-            nodes.append(merged_node)
-        return HuffmanTree(nodes[0], encoding_table)
+        while len(heap) >= 2:
+            left = heapq.heappop(heap)
+            right = heapq.heappop(heap)
+            merged_node = Node.new_node(left.weight + right.weight, left=left, right=right)
+            left.parent = merged_node
+            right.parent = merged_node
+            heapq.heappush(heap, merged_node)
+        return HuffmanTree(heap[0], encoding_table)
 
 class HuffmanEncoderUnicode:
     def __init__(self, tree: HuffmanTree, stream: io.BufferedWriter):
