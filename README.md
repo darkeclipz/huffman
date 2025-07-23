@@ -14,6 +14,10 @@ A command-line utility for compressing and decompressing text files using Huffma
 
 - Python 3.10+
 
+## Setup
+
+To compile the `BufferedBitWriterNative` object, use `python setup.py build_ext --inplace`.
+
 ## Usage
 
 ### Encode a file
