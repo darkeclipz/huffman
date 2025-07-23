@@ -49,6 +49,36 @@ class BitBuffer:
         if self.write_bit_position != 0:
             write_int8(stream, self.write_bit_buffer)
 
+class BufferedBitWriter:
+    def __init__(self, stream: io.BufferedWriter, buffer_size: int = 4096):
+        self.stream = stream
+        self.byte_buffer = bytearray()
+        self.bit_buffer = 0
+        self.bit_pos = 0
+        self.buffer_size = buffer_size
+    def write_bit(self, bit: int):
+        assert bit == 0 or bit == 1
+        self.bit_buffer = (self.bit_buffer << 1) | bit
+        self.bit_pos += 1
+        if self.bit_pos == 8:
+            self.byte_buffer.append(self.bit_buffer)
+            self.bit_buffer = 0
+            self.bit_pos = 0
+            if len(self.byte_buffer) >= self.buffer_size:
+                self.flush_bytes()
+    def flush_bytes(self):
+        if self.byte_buffer:
+            self.stream.write(self.byte_buffer)
+            self.byte_buffer.clear()
+    def flush(self):
+        if self.bit_pos > 0:
+            self.bit_buffer <<= (8 - self.bit_pos)
+            self.byte_buffer.append(self.bit_buffer)
+            self.bit_pos = 0
+        self.flush_bytes()
+    def bytes_written(self) -> int:
+        return len(self.byte_buffer) * 8 + self.bit_pos
+
 def write_int8(stream: io.BufferedWriter, value: int) -> None:
     stream.write(value.to_bytes(1, "big"))
 
@@ -85,7 +115,6 @@ class HuffmanTree:
                 bit = current.children.index(previous)
                 path.append(bit)
             node.bit_sequence = path[::-1]
-
     @staticmethod
     def new(frequency_list: List[tuple[str, int]]):
         encoding_table: dict[str, Node] = {}
@@ -108,7 +137,7 @@ class HuffmanEncoderUnicode:
         self.tree = tree
         self.stream = stream
         self.write_header()
-        self.bit_buffer = BitBuffer()
+        self.buffer = BufferedBitWriter(stream)
     def write_header(self):
         write_int32(self.stream, FILE_FORMAT_CONSTANT)
         write_int8(self.stream, FILE_FORMAT_VERSION)
@@ -125,14 +154,15 @@ class HuffmanEncoderUnicode:
         write_int8(self.stream, 0)
     def write(self, character) -> None:
         for bit in self.tree.encoding_table[character].bit_sequence:
-            self.bit_buffer.write_int1(self.stream, bit)
+            self.buffer.write_bit(bit)
     def close(self):
-        self.bit_buffer.flush(self.stream)
+        used_bits = self.buffer.bit_pos
+        self.buffer.flush()
         total_bytes_written = self.stream.tell() - self.encoded_message_used_bits_position - 1
         self.stream.seek(self.encoded_message_size_position)
         write_int32(self.stream, total_bytes_written)
         self.stream.seek(self.encoded_message_used_bits_position)
-        write_int8(self.stream, self.bit_buffer.write_bit_position)
+        write_int8(self.stream, used_bits)
         self.stream.seek(0)
 
 class BitReader:
