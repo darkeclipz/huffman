@@ -35,7 +35,7 @@ The `.zhf` file contains:
 - File format constant (4 bytes)
 - File format version (1 byte)
 - Frequency table length (4 bytes)
-- Frequency table entries (1 byte char + 4 byte count each)
+- Frequency table entries (1 byte UTF-8 char len L + L bytes UTF-8 char + 4 byte char frequency)
 - Encoded message length (4 bytes)
 - Final byte bit length (1 byte)
 - Encoded data (variable)
