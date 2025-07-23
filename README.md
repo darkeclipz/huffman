@@ -1,13 +1,12 @@
 # Huffman Encoder & Decoder
 
-A command-line utility for compressing and decompressing ASCII text files using Huffman coding. This tool encodes `.txt` files into a custom binary `.zhf` format and can decode them back with full accuracy.
+A command-line utility for compressing and decompressing text files using Huffman coding. This tool encodes `.txt` files into a custom binary `.zhf` format and can decode them back with full accuracy.
 
 ## Features
 
 - Huffman encoding and decoding
 - Command-line interface
 - Custom binary file format with versioning
-- ASCII-only input validation
 - Unit test support
 - Ready for streaming input/output with large files
 
@@ -51,9 +50,8 @@ pytest
 
 Make sure test files like `hello_world.txt` and `lorem.txt` are available or modify the tests to use temporary files.
 
-Large files of test data can be found here: https://mattmahoney.net/dc/textdata.html
 
-## Limitations
+## Note
 
-- Only ASCII characters are supported
 - This is for educational purposes, so I wouldn't use this in a real scenario
+- Large files of test data can be found here: https://mattmahoney.net/dc/textdata.html
