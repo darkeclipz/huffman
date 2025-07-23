@@ -7,10 +7,8 @@ from collections import Counter
 import argparse
 from tqdm import tqdm
 
-VERSION_ASCII = 1
-VERSION_UNICODE = 2
 FILE_FORMAT_CONSTANT = 0x5A4846
-FILE_FORMAT_VERSION = VERSION_UNICODE
+FILE_FORMAT_VERSION = 2
 
 @dataclass
 class Node:
