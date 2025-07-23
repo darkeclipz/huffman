@@ -17,15 +17,16 @@ class Node:
     char: str | None
     weight: int
     children: List[Node]
+    bit_sequence: List[int]
     _id_counter: ClassVar[int] = 0
     @staticmethod
     def new_leaf(character: str | None, weight: int):
         Node._id_counter += 1
-        return Node(Node._id_counter, None, character, weight, [])
+        return Node(Node._id_counter, None, character, weight, [], [])
     @staticmethod
     def new_node(weight: int, left: Node, right: Node):
         Node._id_counter += 1
-        return Node(Node._id_counter, None, None, weight, [left, right])
+        return Node(Node._id_counter, None, None, weight, [left, right], [])
     def __eq__(self, other):
         return isinstance(other, Node) and self.id == other.id
 
@@ -70,6 +71,18 @@ class HuffmanTree:
     def __init__(self, root: Node, encoding_table: dict[str, Node]):
         self.root = root
         self.encoding_table = encoding_table
+        self.compute_bit_sequences()
+    def compute_bit_sequences(self):
+        for _, node in self.encoding_table.items():
+            current: Node = node
+            path: List[int] = []
+            while current.parent:
+                previous = current
+                current = current.parent
+                bit = current.children.index(previous)
+                path.append(bit)
+            node.bit_sequence = path[::-1]
+
     @staticmethod
     def new(frequency_list: List[tuple[str, int]]):
         nodes = []
@@ -109,15 +122,8 @@ class HuffmanEncoderUnicode:
         self.encoded_message_used_bits_position = self.stream.tell()
         write_int8(self.stream, 0)
     def write(self, character) -> None:
-        current: Node = self.tree.encoding_table[character]
-        path: List[int] = []
-        while current.parent:
-            previous = current
-            current = current.parent
-            bit = current.children.index(previous)
-            path.append(bit)
-        while path:
-            self.bit_buffer.write_int1(self.stream, path.pop())
+        for bit in self.tree.encoding_table[character].bit_sequence:
+            self.bit_buffer.write_int1(self.stream, bit)
     def close(self):
         self.bit_buffer.flush(self.stream)
         total_bytes_written = self.stream.tell() - self.encoded_message_used_bits_position - 1
