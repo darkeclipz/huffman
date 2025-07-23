@@ -5,6 +5,7 @@ import io
 import pathlib
 from collections import Counter
 import argparse
+from tqdm import tqdm
 
 FILE_FORMAT_CONSTANT = 0x5A4846
 FILE_FORMAT_VERSION = 1
@@ -157,9 +158,10 @@ class HuffmanDecoder:
 def assert_ascii_text(text):
     if not text.isascii():
             raise ValueError("Input file must contain only ASCII characters. Unicode is not supported.")
-    
+
 def encode_streaming(input_path, output_path, chunk_size=8192):
     frequency_counter = Counter()
+    file_size = pathlib.Path(input_path).stat().st_size
     with open(input_path, "r", encoding="ascii") as f:
         for chunk in iter(lambda: f.read(chunk_size), ""):
             if not chunk.isascii():
@@ -169,9 +171,11 @@ def encode_streaming(input_path, output_path, chunk_size=8192):
     with open(output_path, "wb") as fout:
         encoder = HuffmanEncoder(tree, fout)
         with open(input_path, "r", encoding="ascii") as fin:
-            for chunk in iter(lambda: fin.read(chunk_size), ""):
-                for char in chunk:
-                    encoder.write(char)
+            with tqdm(total=file_size, desc="Encoding", unit="B", unit_scale=True) as pbar:
+                for chunk in iter(lambda: fin.read(chunk_size), ""):
+                    for char in chunk:
+                        encoder.write(char)
+                    pbar.update(len(chunk))
         encoder.close()
 
 def assert_zhf_file_format(stream):
@@ -200,9 +204,11 @@ def decode_streaming(input_path, output_path):
         frequencies = read_frequencies(fin)
         tree = HuffmanTree.new(frequencies)
         decoder = HuffmanDecoder(tree, fin)
-        with open(output_path, "w", encoding="ascii") as fout:
-            for char in decoder.read():
-                fout.write(char)
+        with tqdm(total=decoder.encoded_message_size, desc="Decoding", unit="B", unit_scale=True) as pbar:
+            with open(output_path, "w", encoding="ascii") as fout:
+                for char in decoder.read():
+                    fout.write(char)
+                    pbar.update(1)
 
 def main():
     parser = argparse.ArgumentParser(description="Huffman Encoder/Decoder CLI")
