@@ -19,9 +19,7 @@ class Node:
     char: str | None
     weight: int
     children: List[Node]
-    encoding_bits: tuple[int, int] = (0, 0)
-    encoding_length: int = 0
-    encoding_path_int: tuple[int, int] | None = None
+    encoding_path: tuple[int, int] | None = None
     _id_counter: ClassVar[int] = 0
     @staticmethod
     def new_leaf(character: str | None, weight: int):
@@ -34,7 +32,7 @@ class Node:
     def __eq__(self, other):
         return isinstance(other, Node) and self.id == other.id
     def __lt__(self, other):
-        return self.weight < other.weight
+        return (self.weight, self.id) < (other.weight, other.id)
 
 def write_int8(stream: io.BufferedWriter, value: int) -> None:
     stream.write(value.to_bytes(1, "big"))
@@ -66,8 +64,7 @@ class HuffmanTree:
             path_int = 0
             for b in bits:
                 path_int = (path_int << 1) | b
-            node.encoding_bits = (path_int, len(bits))
-            node.encoding_path_int = (path_int, len(bits))
+            node.encoding_path = (path_int, len(bits))
     @staticmethod
     def new(frequency_list: List[tuple[str, int]]):
         encoding_table: dict[str, Node] = {}
@@ -108,6 +105,7 @@ class HuffmanEncoderUnicode:
     def write_chunk(self, text_chunk):
         self.buffer.write_chunk(text_chunk, self.tree.encoding_table)
     def close(self):
+        last_pos = self.stream.tell()
         used_bits = self.buffer.bit_pos
         self.buffer.flush()
         total_bytes_written = self.stream.tell() - self.encoded_message_used_bits_position - 1
@@ -115,7 +113,7 @@ class HuffmanEncoderUnicode:
         write_int32(self.stream, total_bytes_written)
         self.stream.seek(self.encoded_message_used_bits_position)
         write_int8(self.stream, used_bits)
-        self.stream.seek(0)
+        self.stream.seek(last_pos)
 
 class BitReader:
     def __init__(self, byte, max_length = 8):

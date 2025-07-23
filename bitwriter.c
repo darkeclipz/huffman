@@ -2366,11 +2366,11 @@ static const char __pyx_k_bits_written[] = "bits_written";
 static const char __pyx_k_is_coroutine[] = "_is_coroutine";
 static const char __pyx_k_stringsource[] = "<stringsource>";
 static const char __pyx_k_bitwriter_pyx[] = "bitwriter.pyx";
+static const char __pyx_k_encoding_path[] = "encoding_path";
 static const char __pyx_k_reduce_cython[] = "__reduce_cython__";
 static const char __pyx_k_encoding_table[] = "encoding_table";
 static const char __pyx_k_A_4y_2T_G1D_1_L[] = "\200A\330\010\013\2104\210y\230\002\230!\340\014\020\320\020!\240\022\2402\240T\250\021\330\014\020\220\014\230G\2401\240D\250\001\330\014\020\220\013\2301\330\010\014\210L\230\001";
 static const char __pyx_k_setstate_cython[] = "__setstate_cython__";
-static const char __pyx_k_encoding_path_int[] = "encoding_path_int";
 static const char __pyx_k_asyncio_coroutines[] = "asyncio.coroutines";
 static const char __pyx_k_cline_in_traceback[] = "cline_in_traceback";
 static const char __pyx_k_BufferedBitWriterNative[] = "BufferedBitWriterNative";
@@ -2500,7 +2500,7 @@ static __pyx_mstatetype * const __pyx_mstate_global = &__pyx_mstate_global_stati
 #define __pyx_n_u_cline_in_traceback __pyx_string_tab[20]
 #define __pyx_kp_u_disable __pyx_string_tab[21]
 #define __pyx_kp_u_enable __pyx_string_tab[22]
-#define __pyx_n_u_encoding_path_int __pyx_string_tab[23]
+#define __pyx_n_u_encoding_path __pyx_string_tab[23]
 #define __pyx_n_u_encoding_table __pyx_string_tab[24]
 #define __pyx_n_u_flush __pyx_string_tab[25]
 #define __pyx_n_u_flush_bytes __pyx_string_tab[26]
@@ -3278,7 +3278,7 @@ static PyObject *__pyx_f_9bitwriter_23BufferedBitWriterNative_write_chunk(struct
   }
 
   /* "bitwriter.pyx":47
- *                         Node.encoding_path_int = (int path, int length)
+ *                         Node.encoding_path = (int path, int length)
  *         """
  *         cdef Py_ssize_t i, n = len(text)             # <<<<<<<<<<<<<<
  *         cdef object ch
@@ -3292,7 +3292,7 @@ static PyObject *__pyx_f_9bitwriter_23BufferedBitWriterNative_write_chunk(struct
  * 
  *         for i in range(n):             # <<<<<<<<<<<<<<
  *             ch = text[i]
- *             path_info = encoding_table[ch].encoding_path_int
+ *             path_info = encoding_table[ch].encoding_path
 */
   __pyx_t_6 = __pyx_v_n;
   __pyx_t_7 = __pyx_t_6;
@@ -3303,7 +3303,7 @@ static PyObject *__pyx_f_9bitwriter_23BufferedBitWriterNative_write_chunk(struct
  * 
  *         for i in range(n):
  *             ch = text[i]             # <<<<<<<<<<<<<<
- *             path_info = encoding_table[ch].encoding_path_int
+ *             path_info = encoding_table[ch].encoding_path
  *             path = path_info[0]
 */
     __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_text, __pyx_v_i, Py_ssize_t, 1, PyLong_FromSsize_t, 0, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 53, __pyx_L1_error)
@@ -3314,7 +3314,7 @@ static PyObject *__pyx_f_9bitwriter_23BufferedBitWriterNative_write_chunk(struct
     /* "bitwriter.pyx":54
  *         for i in range(n):
  *             ch = text[i]
- *             path_info = encoding_table[ch].encoding_path_int             # <<<<<<<<<<<<<<
+ *             path_info = encoding_table[ch].encoding_path             # <<<<<<<<<<<<<<
  *             path = path_info[0]
  *             steps = path_info[1]
 */
@@ -3324,7 +3324,7 @@ static PyObject *__pyx_f_9bitwriter_23BufferedBitWriterNative_write_chunk(struct
     }
     __pyx_t_1 = __Pyx_PyDict_GetItem(__pyx_v_encoding_table, __pyx_v_ch); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 54, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_encoding_path_int); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 54, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_encoding_path); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 54, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     if (!(likely(PyTuple_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None) || __Pyx_RaiseUnexpectedTypeError("tuple", __pyx_t_2))) __PYX_ERR(0, 54, __pyx_L1_error)
@@ -3333,7 +3333,7 @@ static PyObject *__pyx_f_9bitwriter_23BufferedBitWriterNative_write_chunk(struct
 
     /* "bitwriter.pyx":55
  *             ch = text[i]
- *             path_info = encoding_table[ch].encoding_path_int
+ *             path_info = encoding_table[ch].encoding_path
  *             path = path_info[0]             # <<<<<<<<<<<<<<
  *             steps = path_info[1]
  * 
@@ -3346,7 +3346,7 @@ static PyObject *__pyx_f_9bitwriter_23BufferedBitWriterNative_write_chunk(struct
     __pyx_v_path = __pyx_t_9;
 
     /* "bitwriter.pyx":56
- *             path_info = encoding_table[ch].encoding_path_int
+ *             path_info = encoding_table[ch].encoding_path
  *             path = path_info[0]
  *             steps = path_info[1]             # <<<<<<<<<<<<<<
  * 
@@ -3425,7 +3425,7 @@ PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-PyDoc_STRVAR(__pyx_doc_9bitwriter_23BufferedBitWriterNative_4write_chunk, "\n        text: Python str (Unicode)\n        encoding_table: dict mapping character (str) -> Node with\n                        Node.encoding_path_int = (int path, int length)\n        ");
+PyDoc_STRVAR(__pyx_doc_9bitwriter_23BufferedBitWriterNative_4write_chunk, "\n        text: Python str (Unicode)\n        encoding_table: dict mapping character (str) -> Node with\n                        Node.encoding_path = (int path, int length)\n        ");
 static PyMethodDef __pyx_mdef_9bitwriter_23BufferedBitWriterNative_5write_chunk = {"write_chunk", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_9bitwriter_23BufferedBitWriterNative_5write_chunk, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_9bitwriter_23BufferedBitWriterNative_4write_chunk};
 static PyObject *__pyx_pw_9bitwriter_23BufferedBitWriterNative_5write_chunk(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
@@ -5192,7 +5192,7 @@ static const __Pyx_StringTabEntry __pyx_string_tab[] = {
   {__pyx_k_cline_in_traceback, sizeof(__pyx_k_cline_in_traceback), 0, 1, 1}, /* PyObject cname: __pyx_n_u_cline_in_traceback */
   {__pyx_k_disable, sizeof(__pyx_k_disable), 0, 1, 0}, /* PyObject cname: __pyx_kp_u_disable */
   {__pyx_k_enable, sizeof(__pyx_k_enable), 0, 1, 0}, /* PyObject cname: __pyx_kp_u_enable */
-  {__pyx_k_encoding_path_int, sizeof(__pyx_k_encoding_path_int), 0, 1, 1}, /* PyObject cname: __pyx_n_u_encoding_path_int */
+  {__pyx_k_encoding_path, sizeof(__pyx_k_encoding_path), 0, 1, 1}, /* PyObject cname: __pyx_n_u_encoding_path */
   {__pyx_k_encoding_table, sizeof(__pyx_k_encoding_table), 0, 1, 1}, /* PyObject cname: __pyx_n_u_encoding_table */
   {__pyx_k_flush, sizeof(__pyx_k_flush), 0, 1, 1}, /* PyObject cname: __pyx_n_u_flush */
   {__pyx_k_flush_bytes, sizeof(__pyx_k_flush_bytes), 0, 1, 1}, /* PyObject cname: __pyx_n_u_flush_bytes */

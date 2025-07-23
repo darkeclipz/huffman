@@ -42,7 +42,7 @@ cdef class BufferedBitWriterNative:
         """
         text: Python str (Unicode)
         encoding_table: dict mapping character (str) -> Node with
-                        Node.encoding_path_int = (int path, int length)
+                        Node.encoding_path = (int path, int length)
         """
         cdef Py_ssize_t i, n = len(text)
         cdef object ch
@@ -51,7 +51,7 @@ cdef class BufferedBitWriterNative:
 
         for i in range(n):
             ch = text[i]
-            path_info = encoding_table[ch].encoding_path_int
+            path_info = encoding_table[ch].encoding_path
             path = path_info[0]
             steps = path_info[1]
 
