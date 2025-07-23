@@ -120,6 +120,10 @@ class BitReader:
         self.byte = byte
         self.position = 0
         self.max_length = max_length
+    def set(self, byte, max_length):
+        self.byte = byte
+        self.position = 0
+        self.max_length = max_length
     def __iter__(self):
         while self.position < self.max_length:
             shift = (8 - self.position - 1)
