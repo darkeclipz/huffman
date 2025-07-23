@@ -51,6 +51,8 @@ pytest
 
 Make sure test files like `hello_world.txt` and `lorem.txt` are available or modify the tests to use temporary files.
 
+Large files of test data can be found here: https://mattmahoney.net/dc/textdata.html
+
 ## Limitations
 
 - Only ASCII characters are supported
