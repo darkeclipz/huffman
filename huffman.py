@@ -14,7 +14,7 @@ FILE_FORMAT_VERSION = 2
 class Node:
     id: int
     parent: Node | None
-    character: str | None
+    char: str | None
     weight: int
     children: List[Node]
     _id_counter: ClassVar[int] = 0
@@ -99,8 +99,8 @@ class HuffmanEncoderUnicode:
         write_int8(self.stream, FILE_FORMAT_VERSION)
         encoding_table_size = len(self.tree.encoding_table)
         write_int32(self.stream, encoding_table_size)
-        for character, node in self.tree.encoding_table.items():
-            encoded_char = character.encode("utf-8")
+        for char, node in self.tree.encoding_table.items():
+            encoded_char = char.encode("utf-8")
             write_int8(self.stream, len(encoded_char))
             self.stream.write(encoded_char)
             write_int32(self.stream, node.weight)
@@ -146,16 +146,16 @@ class HuffmanDecoderUnicode:
         self.stream = stream
         self.encoded_message_size = read_int32(stream)
         self.encoded_message_used_bits = read_int8(stream)
-        self.current_node = tree.root
+        self.current: Node = tree.root
     def read(self) -> Generator[str]:
         for i in range(self.encoded_message_size):
             length = 8 if i != self.encoded_message_size - 1 else self.encoded_message_used_bits
             byte = read_int8(self.stream)
             for bit in BitReader(byte, length):
-                self.current_node = self.current_node.children[bit]
-                if self.current_node.character:
-                    yield self.current_node.character
-                    self.current_node = self.tree.root
+                self.current = self.current.children[bit]
+                if self.current.char:
+                    yield self.current.char
+                    self.current = self.tree.root
     @staticmethod
     def read_frequencies(stream: io.BufferedReader) -> List[tuple[str, int]]:
         frequency_table_length = read_int32(stream)
@@ -163,9 +163,9 @@ class HuffmanDecoderUnicode:
         for _ in range(frequency_table_length):
             char_len = read_int8(stream)
             char_bytes = stream.read(char_len)
-            character = char_bytes.decode("utf-8")
-            occurances = read_int32(stream)
-            frequencies.append((character, occurances))
+            char = char_bytes.decode("utf-8")
+            frequency = read_int32(stream)
+            frequencies.append((char, frequency))
         return frequencies
 
 def encode_streaming(input_path, output_path, chunk_size=8192):
