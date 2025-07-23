@@ -19,7 +19,7 @@ class Node:
     char: str | None
     weight: int
     children: List[Node]
-    encoding_path: tuple[int, int] | None = None
+    bit_sequence: tuple[int, int] | None = None
     _id_counter: ClassVar[int] = 0
     @staticmethod
     def new_leaf(character: str | None, weight: int):
@@ -64,7 +64,7 @@ class HuffmanTree:
             path_int = 0
             for b in bits:
                 path_int = (path_int << 1) | b
-            node.encoding_path = (path_int, len(bits))
+            node.bit_sequence = (path_int, len(bits))
     @staticmethod
     def new(frequency_list: List[tuple[str, int]]):
         encoding_table: dict[str, Node] = {}
