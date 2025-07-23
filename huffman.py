@@ -6,28 +6,6 @@ import pathlib
 from collections import Counter
 import argparse
 
-# Huffman Encoding/Decoding Algorithm
-#
-# Usage:
-#  - Encode: `python huffman.py encode --input example.txt --output example.zhf`
-#  - Decode: `python huffman.py decode --input example.zhf --output example.txt`
-#
-# File format:
-#  - Binary file format
-#  - Only ASCII is supported
-#  - Uses extension .zhf
-#  - The length of the arrays is described before the array
-#  - The frequency table uses a (character, occurance_count) tuple
-# 
-# Layout:
-#  - File format constant (int32)
-#  - File format version (int8)
-#  - Frequency table length (int32)
-#  - Frequency table (tuple(int8, int32)[])
-#  - Encoded message length (int32)
-#  - Encoded message used bits (int8)
-#  - Encoded message data (int8[])
-
 FILE_FORMAT_CONSTANT = 0x5A4846
 FILE_FORMAT_VERSION = 1
 
