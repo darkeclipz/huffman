@@ -72,8 +72,8 @@ class HuffmanTree:
     def new(frequency_list: List[tuple[str, int]]):
         encoding_table: dict[str, Node] = {}
         heap: List[Node] = []
-        for character, occurance in frequency_list:
-            node = Node.new_leaf(character, occurance)
+        for character, frequency in frequency_list:
+            node = Node.new_leaf(character, frequency)
             heapq.heappush(heap, node)
             encoding_table[character] = node
         while len(heap) >= 2:
@@ -105,10 +105,6 @@ class HuffmanEncoderUnicode:
         write_int32(self.stream, 0)
         self.encoded_message_used_bits_position = self.stream.tell()
         write_int8(self.stream, 0)
-    # def write(self, character) -> None:
-    #     node = self.tree.encoding_table[character]
-    #     for bit in node.encoding_bits:
-    #         self.buffer.write_bit(bit)
     def write_chunk(self, text_chunk):
         self.buffer.write_chunk(text_chunk, self.tree.encoding_table)
     def close(self):
