@@ -7,8 +7,10 @@ from collections import Counter
 import argparse
 from tqdm import tqdm
 
+VERSION_ASCII = 1
+VERSION_UNICODE = 2
 FILE_FORMAT_CONSTANT = 0x5A4846
-FILE_FORMAT_VERSION = 1
+FILE_FORMAT_VERSION = VERSION_UNICODE
 
 @dataclass
 class Node:
@@ -88,7 +90,7 @@ class HuffmanTree:
             nodes.append(merged_node)
         return HuffmanTree(nodes[0], encoding_table)
 
-class HuffmanEncoder:
+class HuffmanEncoderUnicode:
     def __init__(self, tree: HuffmanTree, stream: io.BufferedWriter):
         self.tree = tree
         self.stream = stream
@@ -100,7 +102,9 @@ class HuffmanEncoder:
         encoding_table_size = len(self.tree.encoding_table)
         write_int32(self.stream, encoding_table_size)
         for character, node in self.tree.encoding_table.items():
-            write_int8(self.stream, ord(character))
+            encoded_char = character.encode("utf-8")
+            write_int8(self.stream, len(encoded_char))
+            self.stream.write(encoded_char)
             write_int32(self.stream, node.weight)
         self.encoded_message_size_position = self.stream.tell()
         write_int32(self.stream, 0)
@@ -138,7 +142,7 @@ class BitReader:
             yield value
             self.position += 1
 
-class HuffmanDecoder:
+class HuffmanDecoderUnicode:
     def __init__(self, tree: HuffmanTree, stream: io.BufferedReader):
         self.tree = tree
         self.stream = stream
@@ -154,23 +158,28 @@ class HuffmanDecoder:
                 if self.current_node.character:
                     yield self.current_node.character
                     self.current_node = self.tree.root
-
-def assert_ascii_text(text):
-    if not text.isascii():
-            raise ValueError("Input file must contain only ASCII characters. Unicode is not supported.")
+    @staticmethod
+    def read_frequencies(stream: io.BufferedReader) -> List[tuple[str, int]]:
+        frequency_table_length = read_int32(stream)
+        frequencies = []
+        for _ in range(frequency_table_length):
+            char_len = read_int8(stream)
+            char_bytes = stream.read(char_len)
+            character = char_bytes.decode("utf-8")
+            occurances = read_int32(stream)
+            frequencies.append((character, occurances))
+        return frequencies
 
 def encode_streaming(input_path, output_path, chunk_size=8192):
     frequency_counter = Counter()
     file_size = pathlib.Path(input_path).stat().st_size
-    with open(input_path, "r", encoding="ascii") as f:
+    with open(input_path, "r", encoding="utf-8") as f:
         for chunk in iter(lambda: f.read(chunk_size), ""):
-            if not chunk.isascii():
-                raise ValueError("Input must be ASCII only.")
             frequency_counter.update(chunk)
     tree = HuffmanTree.new(frequency_counter.most_common())
     with open(output_path, "wb") as fout:
-        encoder = HuffmanEncoder(tree, fout)
-        with open(input_path, "r", encoding="ascii") as fin:
+        encoder = HuffmanEncoderUnicode(tree, fout)
+        with open(input_path, "r", encoding="utf-8") as fin:
             with tqdm(total=file_size, desc="Encoding", unit="B", unit_scale=True) as pbar:
                 for chunk in iter(lambda: fin.read(chunk_size), ""):
                     for char in chunk:
@@ -182,30 +191,21 @@ def assert_zhf_file_format(stream):
     file_format_constant = read_int32(stream)
     if file_format_constant != FILE_FORMAT_CONSTANT:
         raise ValueError("Invalid file format.")
-    
+
 def assert_file_format_version(stream):
     file_format_version = read_int8(stream)
     if file_format_version != FILE_FORMAT_VERSION:
         raise ValueError("Invalid file format version.")
 
-def read_frequencies(stream: io.BufferedReader) -> List[tuple[str, int]]:
-    frequency_table_length = read_int32(stream)
-    frequencies = []
-    for _ in range(frequency_table_length):
-        character = chr(read_int8(stream))
-        occurances = read_int32(stream)
-        frequencies.append((character, occurances))
-    return frequencies
-
 def decode_streaming(input_path, output_path):
     with open(input_path, "rb") as fin:
         assert_zhf_file_format(fin)
         assert_file_format_version(fin)
-        frequencies = read_frequencies(fin)
+        frequencies = HuffmanDecoderUnicode.read_frequencies(fin)
         tree = HuffmanTree.new(frequencies)
-        decoder = HuffmanDecoder(tree, fin)
+        decoder = HuffmanDecoderUnicode(tree, fin)
         with tqdm(total=decoder.encoded_message_size, desc="Decoding", unit="B", unit_scale=True) as pbar:
-            with open(output_path, "w", encoding="ascii") as fout:
+            with open(output_path, "w", encoding="utf-8") as fout:
                 for char in decoder.read():
                     fout.write(char)
                     pbar.update(1)

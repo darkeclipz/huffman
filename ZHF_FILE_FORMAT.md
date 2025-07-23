@@ -42,9 +42,10 @@ A 1-byte version identifier. The current version is `1`.
 ### Frequency Table
 
 - 4-byte integer: Number of entries `N` in the frequency table
-- Each entry (5 bytes):
-  - 1 byte: ASCII character (`ord(char)`)
-  - 4 bytes: Occurrence count (unsigned integer)
+- Each entry (5+L bytes):
+  - 1 byte: character byte length `L`
+  - L bytes: UTF-8 character bytes
+  - 4 bytes: occurrence count
 
 This table is used to reconstruct the exact Huffman tree used during compression.
 
