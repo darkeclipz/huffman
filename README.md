@@ -54,3 +54,4 @@ Make sure test files like `hello_world.txt` and `lorem.txt` are available or mod
 ## Limitations
 
 - Only ASCII characters are supported
+- This is for educational purposes, so I wouldn't use this in a real scenario
